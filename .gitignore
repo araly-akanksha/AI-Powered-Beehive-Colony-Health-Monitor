@@ -1,0 +1,61 @@
+# ============================================================
+# .gitignore — Beehive Health Monitoring Project
+# ============================================================
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+*.spec
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Data — raw audio is large, never commit it
+data/raw/
+data/processed/*.csv
+
+# Model weights
+checkpoints/
+*.pt
+*.pth
+*.onnx
+
+# Weights & Biases
+wandb/
+.wandb/
+
+# Logs
+logs/
+*.log
+training_log.csv
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
