@@ -42,12 +42,13 @@ BIDIRECTIONAL  = True
 # ----------------------------------------------------------
 # TRAINING SETTINGS
 # ----------------------------------------------------------
-BATCH_SIZE     = 32
-LEARNING_RATE  = 1e-3
-WEIGHT_DECAY   = 1e-4
-EPOCHS         = 50
-PATIENCE       = 10      # early stopping patience (epochs without val improvement)
-LR_PATIENCE    = 5       # ReduceLROnPlateau patience
+BATCH_SIZE         = 32
+LEARNING_RATE      = 1e-3
+WEIGHT_DECAY       = 1e-4
+EPOCHS             = 20
+PATIENCE           = 5       # early stopping patience (epochs without val improvement)
+LR_PATIENCE        = 3       # ReduceLROnPlateau patience
+SAMPLES_PER_EPOCH  = 40000   # balanced samples drawn per epoch (for fast, sustainable training)
 
 # ----------------------------------------------------------
 # CLASS LABELS
@@ -69,23 +70,31 @@ IDX_TO_LABEL = {v: k for k, v in LABEL_MAP.items()}
 #   Placeholders below — update after you see manifest.csv.
 # The cross-hive generalization logic hinges on these splits!
 HIVE_SPLITS = {
-    # Hives the model sees during training
-    "train": ["cf003", "hive1", "hive1 12", "hive1 31", "queen_other"],
-    # Held out for hyperparameter tuning
-    "val":   ["cj001"],
-    # Fully unseen during training — testing the generalization gap!
-    "test":  ["hive3"]
+    # Hives seen during training (diverse mix of box types, environments, and microphones)
+    "train": [
+        "nuhive_1", "sbcm_1", "sbcm_4", "tbon_1", "tbon_3", "tbon_4", "tbon_5",
+        "hive1", "hive1 12", "hive1 31", "cf003", "queen_other"
+    ],
+    # Held out for tuning & early stopping (multi-hive, balanced representation)
+    "val": [
+        "sbcm_3", "tbon_2", "cj001"
+    ],
+    # Fully unseen during training — ultimate cross-hive generalisation benchmark!
+    "test": [
+        "nuhive_3", "sbcm_5", "hive3", "tbon_6"
+    ]
 }
 
 # ----------------------------------------------------------
 # PATHS
 # ----------------------------------------------------------
-ROOT_DIR        = os.path.dirname(os.path.abspath(__file__))
-DATA_RAW_TBON   = os.path.join(ROOT_DIR, "data", "raw", "tbon")
-DATA_RAW_QUEEN  = os.path.join(ROOT_DIR, "data", "raw", "queen_noqueen")
-DATA_PROCESSED  = os.path.join(ROOT_DIR, "data", "processed")
-MANIFEST_CSV    = os.path.join(DATA_PROCESSED, "manifest.csv")
-CHECKPOINT_DIR  = os.path.join(ROOT_DIR, "checkpoints")
+ROOT_DIR              = os.path.dirname(os.path.abspath(__file__))
+DATA_RAW_TBON         = os.path.join(ROOT_DIR, "data", "raw", "tbon")
+DATA_RAW_QUEEN        = os.path.join(ROOT_DIR, "data", "raw", "queen_noqueen")
+DATA_RAW_BEETOGETHER  = os.path.join(ROOT_DIR, "data", "raw", "beetogether")
+DATA_PROCESSED        = os.path.join(ROOT_DIR, "data", "processed")
+MANIFEST_CSV          = os.path.join(DATA_PROCESSED, "manifest.csv")
+CHECKPOINT_DIR        = os.path.join(ROOT_DIR, "checkpoints")
 
 # Create directories if they don't exist yet
 os.makedirs(DATA_PROCESSED, exist_ok=True)

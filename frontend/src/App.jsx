@@ -1,79 +1,67 @@
-// ============================================================
-// App.jsx — Main application shell
-// Assembles all components, manages shared state
-// ============================================================
-
-import { useState, useEffect } from 'react';
-import { checkHealth } from './api/beehive';
-import AudioUploader from './components/AudioUploader';
-import ResultCard from './components/ResultCard';
-import SpectrogramDisplay from './components/SpectrogramDisplay';
-import SampleClips from './components/SampleClips';
+import { useState } from "react";
+import Header from "./components/Header";
+import Panel from "./components/Panel";
+import AudioUploader from "./components/AudioUploader";
+import SampleClips from "./components/SampleClips";
+import BioacousticMetrics from "./components/BioacousticMetrics";
+import SpectrogramDisplay from "./components/SpectrogramDisplay";
+import ResultCard from "./components/ResultCard";
+import ModelComparison from "./components/ModelComparison";
+import OODBadge from "./components/OODBadge";
+import { useAudioAnalysis } from "./hooks/useAudioAnalysis";
+import { DEMO_MODE } from "./config";
 
 export default function App() {
-  const [modelStatus, setModelStatus] = useState(null); // null=loading, true=ready, false=not ready
-  const [result, setResult]           = useState(null); // prediction result from API
-  const [loading, setLoading]         = useState(false);
-  const [showUnseen, setShowUnseen]   = useState(false); // tracks if current clip is from unseen hive
+  const [viewMode, setViewMode] = useState("compare");
+  const { clip, stage, status, result, error, analyzeFile, analyzeSample } = useAudioAnalysis();
 
-  // Check backend health on mount
-  useEffect(() => {
-    checkHealth()
-      .then(({ model_ready }) => setModelStatus(model_ready))
-      .catch(() => setModelStatus(false));
-  }, []);
-
-  const handleResult = (data, isUnseen = false) => {
-    setResult(data);
-    setShowUnseen(isUnseen);
-  };
+  const isAnalyzing = status === "analyzing";
+  const activeSampleId = clip?.source === "sample" ? clip.sampleId : null;
 
   return (
-    <div className="app-container">
+    <div className="app-shell">
+      <Header status={status} viewMode={viewMode} onViewModeChange={setViewMode} />
 
-      {/* ---- Header ---- */}
-      <header className="app-header">
-        <div className="bee-icon">🐝</div>
-        <h1>Beehive Health Monitor</h1>
-        <p className="subtitle">
-          Deep learning audio classification for bee colony health — queen presence detection
-        </p>
-
-        {/* Model status badge */}
-        <div className="model-badge">
-          <span className={`dot ${modelStatus ? '' : 'offline'}`} />
-          {modelStatus === null  && 'Connecting to model...'}
-          {modelStatus === true  && 'Model ready · CRNN'}
-          {modelStatus === false && 'Model not loaded — train first'}
+      {status === "error" && (
+        <div className="banner banner--error">
+          Couldn't reach the backend: {error}. {DEMO_MODE ? "" : "Double-check it's running, or flip VITE_DEMO_MODE=true to rehearse offline."}
         </div>
-      </header>
-
-      {/* ---- Upload & Analyse ---- */}
-      <AudioUploader
-        onResult={handleResult}
-        loading={loading}
-        setLoading={setLoading}
-        modelReady={modelStatus}
-      />
-
-      {/* ---- Prediction Result ---- */}
-      {result && (
-        <>
-          <ResultCard result={result} isUnseen={showUnseen} />
-          {result.spectrogram_b64 && (
-            <SpectrogramDisplay b64={result.spectrogram_b64} />
-          )}
-        </>
       )}
 
-      {/* ---- Pre-loaded Demo Clips ---- */}
-      <SampleClips
-        onResult={handleResult}
-        loading={loading}
-        setLoading={setLoading}
-        modelReady={modelStatus}
-      />
+      {isAnalyzing && (
+        <div className="banner banner--progress">
+          <span className="banner__spinner" aria-hidden="true" />
+          {stage}
+        </div>
+      )}
 
+      <main className="dashboard-grid">
+        <Panel icon="🎧" title="1. Audio Input" className="panel--audio">
+          <AudioUploader clip={clip} onFileSelected={analyzeFile} disabled={isAnalyzing} />
+          <SampleClips activeSampleId={activeSampleId} onSelect={analyzeSample} disabled={isAnalyzing} />
+        </Panel>
+
+        <Panel icon="📊" title="2. Bioacoustic Metrics" className="panel--metrics">
+          <BioacousticMetrics metrics={result?.metrics} />
+        </Panel>
+
+        <div className="headline-row">
+          <ResultCard models={result?.models} viewMode={viewMode} />
+          <OODBadge hiveType={result?.hiveType} />
+        </div>
+
+        <Panel icon="🔬" title="4. Multi-Model Prediction" subtitle="Baseline CNN vs. CRNN vs. DANN" className="panel--models">
+          <ModelComparison models={result?.models} viewMode={viewMode} />
+        </Panel>
+
+        <Panel icon="🌈" title="3. Log-Mel Spectrogram" className="panel--spectrogram">
+          <SpectrogramDisplay spectrogram={result?.spectrogram} isDemo={DEMO_MODE} />
+        </Panel>
+      </main>
+
+      <footer className="app-footer">
+        Beehive Health Monitor · Cross-hive generalization demo · {DEMO_MODE ? "Demo mode — no backend connected" : "Live backend"}
+      </footer>
     </div>
   );
 }

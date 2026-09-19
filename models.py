@@ -213,6 +213,125 @@ class CRNN(nn.Module):
 
 
 # ==============================================================
+# MODEL 3 — DANN (Domain-Adversarial Neural Network)
+# ==============================================================
+
+class GradientReversalFunction(torch.autograd.Function):
+    """
+    Gradient Reversal Layer (GRL) from Ganin et al. (2016).
+    In the forward pass, it acts as an identity operator.
+    In the backward pass, it scales gradients by -alpha.
+    """
+    @staticmethod
+    def forward(ctx, x, alpha):
+        ctx.alpha = alpha
+        return x.view_as(x)
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        return grad_output.neg() * ctx.alpha, None
+
+
+class DANN(nn.Module):
+    """
+    Domain-Adversarial Neural Network for cross-hive generalisation.
+    Wraps the CRNN feature extractor with a Gradient Reversal Layer (GRL)
+    and an adversarial hive-classification head.
+
+    Core Mechanism:
+      - Health Head: Learns to detect queen presence/absence.
+      - Hive Head: Predicts which physical hive the audio came from.
+      - Gradient Reversal: Inverts gradients from the Hive Head (-alpha).
+      -> Forces the feature extractor to purge hive-specific box resonance
+         and microphone coloration, learning invariant bee health signatures.
+    """
+
+    def __init__(self, num_classes=config.NUM_CLASSES, num_domains=None):
+        super(DANN, self).__init__()
+        if num_domains is None:
+            num_domains = len(config.HIVE_SPLITS.get("train", [])) or 12
+
+        self.num_classes = num_classes
+        self.num_domains = num_domains
+
+        # 1. Feature Extractor (identical to CRNN for fair comparison)
+        self.conv_blocks = nn.Sequential(
+            nn.Conv2d(1, 32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Dropout2d(0.1),
+            nn.Conv2d(32, 64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+        )
+
+        cnn_freq_bins   = config.N_MELS // 8          # = 16
+        cnn_feature_dim = 128 * cnn_freq_bins          # = 2048
+
+        self.feature_proj = nn.Linear(cnn_feature_dim, config.GRU_HIDDEN)
+        self.gru = nn.GRU(
+            input_size    = config.GRU_HIDDEN,
+            hidden_size   = config.GRU_HIDDEN,
+            num_layers    = config.GRU_LAYERS,
+            batch_first   = True,
+            bidirectional = config.BIDIRECTIONAL,
+            dropout       = config.DROPOUT if config.GRU_LAYERS > 1 else 0,
+        )
+        gru_out_size = config.GRU_HIDDEN * (2 if config.BIDIRECTIONAL else 1)
+        self.attention = nn.Linear(gru_out_size, 1)
+
+        # 2. Health Classification Head (Task-specific)
+        self.health_classifier = nn.Sequential(
+            nn.Dropout(config.DROPOUT),
+            nn.Linear(gru_out_size, num_classes),
+        )
+
+        # 3. Domain Classification Head (Adversarial Hive ID predictor)
+        self.domain_classifier = nn.Sequential(
+            nn.Linear(gru_out_size, 128),
+            nn.BatchNorm1d(128),
+            nn.ReLU(inplace=True),
+            nn.Dropout(config.DROPOUT),
+            nn.Linear(128, num_domains),
+        )
+
+    def extract_features(self, x):
+        """Extract bottleneck feature embedding from audio spectrogram."""
+        batch_size = x.size(0)
+        x = self.conv_blocks(x)
+        time_steps = x.size(3)
+        x = x.permute(0, 3, 1, 2).reshape(batch_size, time_steps, -1)
+        x = torch.relu(self.feature_proj(x))
+        x, _ = self.gru(x)
+        attn_weights = torch.softmax(self.attention(x), dim=1)
+        embedding = (x * attn_weights).sum(dim=1)
+        return embedding
+
+    def forward(self, x, alpha=1.0, return_domain=False):
+        """
+        x shape: (batch_size, 1, N_MELS, time_frames)
+        Returns:
+            If return_domain=False: logits of shape (batch, num_classes)
+            If return_domain=True:  (health_logits, domain_logits)
+        """
+        features = self.extract_features(x)
+        health_logits = self.health_classifier(features)
+
+        if return_domain:
+            reversed_features = GradientReversalFunction.apply(features, alpha)
+            domain_logits = self.domain_classifier(reversed_features)
+            return health_logits, domain_logits
+
+        return health_logits
+
+
+# ==============================================================
 # MODEL FACTORY
 # ==============================================================
 
@@ -221,13 +340,13 @@ def get_model(name, num_classes=config.NUM_CLASSES):
     Instantiate a model by name.
 
     Args:
-        name (str): 'baseline_cnn' or 'crnn'
+        name (str): 'baseline_cnn', 'crnn', or 'dann'
         num_classes (int): number of output classes
 
     Returns: nn.Module
 
     Usage:
-        model = get_model('crnn')
+        model = get_model('dann')
     """
     name = name.lower().strip()
 
@@ -235,8 +354,10 @@ def get_model(name, num_classes=config.NUM_CLASSES):
         model = BaselineCNN(num_classes=num_classes)
     elif name == "crnn":
         model = CRNN(num_classes=num_classes)
+    elif name == "dann":
+        model = DANN(num_classes=num_classes)
     else:
-        raise ValueError(f"Unknown model: '{name}'. Choose 'baseline_cnn' or 'crnn'.")
+        raise ValueError(f"Unknown model: '{name}'. Choose 'baseline_cnn', 'crnn', or 'dann'.")
 
     # Print parameter count
     params = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -263,9 +384,13 @@ if __name__ == "__main__":
     dummy_input = torch.randn(4, 1, config.N_MELS, time_frames)
     print(f"\nInput shape : {tuple(dummy_input.shape)}")
 
-    for model_name in ["baseline_cnn", "crnn"]:
+    for model_name in ["baseline_cnn", "crnn", "dann"]:
         model  = get_model(model_name)
         output = model(dummy_input)
-        print(f"{model_name:15} -> output shape: {tuple(output.shape)}  OK")
+        if model_name == "dann":
+            h_out, d_out = model(dummy_input, return_domain=True)
+            print(f"{model_name:15} -> health: {tuple(h_out.shape)}, domain: {tuple(d_out.shape)}  OK")
+        else:
+            print(f"{model_name:15} -> output shape: {tuple(output.shape)}  OK")
 
     print("\nAll models OK -- forward pass complete.")

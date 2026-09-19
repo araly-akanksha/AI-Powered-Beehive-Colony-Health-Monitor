@@ -1,0 +1,46 @@
+import StatusPill from "./StatusPill";
+import { DEMO_MODE } from "../config";
+
+const VIEW_OPTIONS = [
+  { value: "compare", label: "Compare All 3" },
+  { value: "dann", label: "DANN only" },
+  { value: "crnn", label: "CRNN only" },
+  { value: "baseline_cnn", label: "Baseline CNN only" }
+];
+
+export default function Header({ status, viewMode, onViewModeChange }) {
+  const statusTone = status === "analyzing" ? "amber" : status === "error" ? "danger" : "success";
+  const statusLabel =
+    status === "analyzing" ? "Analyzing…" : status === "error" ? "Backend Error" : "Model Ready";
+
+  return (
+    <header className="app-header">
+      <div className="app-header__title">
+        <span className="app-header__mark" aria-hidden="true">🐝</span>
+        <div>
+          <h1>Beehive Health Monitor</h1>
+          <p>Live bioacoustic diagnosis from hive audio</p>
+        </div>
+      </div>
+
+      <div className="app-header__controls">
+        {DEMO_MODE && <StatusPill tone="neutral">Demo Mode</StatusPill>}
+        <StatusPill tone={statusTone}>
+          <span className="status-pill__dot" aria-hidden="true" />
+          {statusLabel} · DANN / CRNN
+        </StatusPill>
+
+        <label className="model-select">
+          <span>Model view</span>
+          <select value={viewMode} onChange={(e) => onViewModeChange(e.target.value)}>
+            {VIEW_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+    </header>
+  );
+}

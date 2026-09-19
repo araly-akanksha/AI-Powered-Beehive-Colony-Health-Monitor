@@ -1,83 +1,39 @@
-// ============================================================
-// components/ResultCard.jsx
-// Animated prediction result with confidence bars
-// ============================================================
+import { PRESENT_LABEL } from "../config";
 
-export default function ResultCard({ result, isUnseen }) {
-  const { label, confidence, all_confidences, n_segments, processing_ms, model_name } = result;
+export default function ResultCard({ models, viewMode }) {
+  if (!models || models.length === 0) {
+    return (
+      <div className="result-card result-card--empty">
+        <p>No clip analyzed yet. Drop a file or pick a demo clip to see a diagnosis here.</p>
+      </div>
+    );
+  }
 
-  const isQueenPresent = label === 'queen_present';
+  const headlineModel =
+    viewMode === "compare"
+      ? models.find((m) => m.key === "dann") || models[models.length - 1]
+      : models.find((m) => m.key === viewMode) || models[0];
 
-  const labelDisplay = isQueenPresent ? 'Queen Present 👑' : 'Queen Absent ⚠️';
-  const verdictClass = isQueenPresent ? 'queen-present' : 'queen-absent';
-  const confPct      = (confidence * 100).toFixed(1);
-
-  // Bar colour logic
-  const barColor = (lbl) => {
-    if (lbl === 'queen_present') return 'green';
-    if (lbl === 'queen_absent')  return 'red';
-    return 'amber';
-  };
+  const isPresent = headlineModel.label === PRESENT_LABEL;
+  const confidencePct = Math.round(headlineModel.confidence * 100);
 
   return (
-    <div className="glass-card result-card">
-      <div className="card-title">📊 Prediction Result</div>
-
-      {/* Generalization banner — shown when clip is from an unseen test hive */}
-      {isUnseen && (
-        <div className="gen-banner">
-          <span className="gen-icon">🧪</span>
-          <div className="gen-banner-text">
-            <h3>Unseen Test Hive</h3>
-            <p>
-              This clip is from a hive the model <strong>has never seen during training</strong>.
-              The accuracy drop from known hives to this hive is the cross-hive generalization
-              gap — the core research finding of this project.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Main verdict */}
-      <div className={`result-verdict ${verdictClass}`}>
-        <span className="verdict-icon">{isQueenPresent ? '👑' : '🚨'}</span>
-        <div className="verdict-text">
-          <h2>{labelDisplay}</h2>
-          <div className="confidence-text">
-            Model confidence: <strong>{confPct}%</strong>
-          </div>
+    <div className={`result-card ${isPresent ? "result-card--healthy" : "result-card--distress"}`}>
+      <div className="result-card__badge">
+        <span aria-hidden="true">{isPresent ? "🟢" : "🔴"}</span>
+        <div>
+          <p className="result-card__label">{isPresent ? "QUEEN PRESENT" : "QUEEN ABSENT"}</p>
+          <p className="result-card__sublabel">{isPresent ? "Healthy Colony" : "Colony in Distress"}</p>
         </div>
       </div>
 
-      {/* Per-class confidence bars */}
-      <div className="confidence-bars">
-        {Object.entries(all_confidences).map(([lbl, prob]) => (
-          <div key={lbl} className="confidence-bar-row">
-            <div className="confidence-bar-label">
-              <span>{lbl.replace('_', ' ')}</span>
-              <span className="pct">{(prob * 100).toFixed(1)}%</span>
-            </div>
-            <div className="bar-track">
-              <div
-                className={`bar-fill ${barColor(lbl)}`}
-                style={{ width: `${(prob * 100).toFixed(1)}%` }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Metadata chips */}
-      <div className="result-meta">
-        {n_segments && (
-          <div className="meta-chip">📦 {n_segments} segments</div>
-        )}
-        {processing_ms && (
-          <div className="meta-chip">⚡ {processing_ms}ms</div>
-        )}
-        {model_name && (
-          <div className="meta-chip">🧠 {model_name}</div>
-        )}
+      <div className="result-card__confidence">
+        <div className="confidence-bar" role="progressbar" aria-valuenow={confidencePct} aria-valuemin={0} aria-valuemax={100}>
+          <div className="confidence-bar__fill" style={{ width: `${confidencePct}%` }} />
+        </div>
+        <p className="result-card__confidence-label">
+          {confidencePct}% confidence · per {headlineModel.name}
+        </p>
       </div>
     </div>
   );

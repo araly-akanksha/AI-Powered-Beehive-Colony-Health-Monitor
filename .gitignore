@@ -28,6 +28,16 @@ env/
 # Data — raw audio is large, never commit it
 data/raw/
 data/processed/*.csv
+*.wav
+*.mp3
+*.flac
+*.ogg
+backend/samples/*.wav
+frontend/public/samples/*.wav
+
+# Scratch & temporary backups
+frontend/src_v1_backup/
+scratch/
 
 # Model weights
 checkpoints/

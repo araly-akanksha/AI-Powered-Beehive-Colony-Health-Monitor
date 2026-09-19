@@ -29,7 +29,8 @@ import config
 from models import get_model
 from data import get_dataloaders, BeeDataset
 
-# Try to import W&B; fall back to CSV logging if not configured
+# Default to disabled W&B unless explicitly configured
+os.environ.setdefault("WANDB_MODE", "disabled")
 try:
     import wandb
     WANDB_AVAILABLE = True
@@ -56,9 +57,13 @@ def get_loss_fn(train_loader):
     the model can reach 80% accuracy by predicting always absent.
     Class weighting penalizes the model more for rare-class mistakes.
     """
-    all_labels = []
-    for _, labels in train_loader:
-        all_labels.extend(labels.tolist())
+    if hasattr(train_loader.dataset, "get_labels"):
+        all_labels = train_loader.dataset.get_labels()
+    else:
+        all_labels = []
+        for batch in train_loader:
+            labels = batch[1]
+            all_labels.extend(labels.tolist())
 
     class_counts = np.bincount(all_labels, minlength=config.NUM_CLASSES)
     class_weights = 1.0 / (class_counts + 1e-8)
@@ -75,9 +80,10 @@ def get_loss_fn(train_loader):
 # SECTION 2 — TRAINING: ONE EPOCH
 # ==============================================================
 
-def train_one_epoch(model, loader, optimizer, criterion, device):
+def train_one_epoch(model, loader, optimizer, criterion, device, is_dann=False, epoch=1, total_epochs=30):
     """
     Run one full pass through the training data.
+    Supports standard training (CNN, CRNN) and domain-adversarial training (DANN).
 
     Returns: dict with 'loss' and 'accuracy'
     """
@@ -85,14 +91,30 @@ def train_one_epoch(model, loader, optimizer, criterion, device):
     total_loss    = 0.0
     all_preds     = []
     all_labels    = []
+    domain_criterion = nn.CrossEntropyLoss() if is_dann else None
 
-    for batch_idx, (specs, labels) in enumerate(loader):
-        specs  = specs.to(device)
-        labels = labels.to(device)
+    for batch_idx, batch in enumerate(loader):
+        if is_dann:
+            specs, labels, domains = batch
+            specs   = specs.to(device)
+            labels  = labels.to(device)
+            domains = domains.to(device)
 
-        # Forward pass
-        logits = model(specs)              # (batch, num_classes)
-        loss   = criterion(logits, labels)
+            # Ganin et al. dynamic GRL alpha schedule: 2 / (1 + exp(-10 * p)) - 1
+            p     = float(batch_idx + (epoch - 1) * len(loader)) / (total_epochs * len(loader) + 1e-8)
+            alpha = float(2.0 / (1.0 + np.exp(-10.0 * p)) - 1.0)
+
+            health_logits, domain_logits = model(specs, alpha=alpha, return_domain=True)
+            health_loss = criterion(health_logits, labels)
+            domain_loss = domain_criterion(domain_logits, domains)
+            loss        = health_loss + domain_loss
+            logits      = health_logits
+        else:
+            specs, labels = batch
+            specs  = specs.to(device)
+            labels = labels.to(device)
+            logits = model(specs)              # (batch, num_classes)
+            loss   = criterion(logits, labels)
 
         # Backward pass
         optimizer.zero_grad()
@@ -247,7 +269,7 @@ def cross_hive_report(model, device, manifest_csv=None):
 def main():
     parser = argparse.ArgumentParser(description="Train beehive audio classifier")
     parser.add_argument("--model",      type=str, default="baseline_cnn",
-                        choices=["baseline_cnn", "crnn"],
+                        choices=["baseline_cnn", "crnn", "dann"],
                         help="Model architecture to train")
     parser.add_argument("--epochs",     type=int, default=config.EPOCHS)
     parser.add_argument("--lr",         type=float, default=config.LEARNING_RATE)
@@ -267,12 +289,13 @@ def main():
     device     = get_device()
     model      = get_model(args.model).to(device)
     print("\nLoading data...")
-    train_loader, val_loader, test_loader = get_dataloaders()
+    is_dann    = (args.model == "dann")
+    train_loader, val_loader, test_loader = get_dataloaders(return_domain=is_dann)
 
     criterion  = get_loss_fn(train_loader).to(device)
     optimizer  = Adam(model.parameters(), lr=args.lr, weight_decay=config.WEIGHT_DECAY)
     scheduler  = ReduceLROnPlateau(optimizer, mode="max", patience=config.LR_PATIENCE,
-                                   factor=0.5, verbose=True)
+                                   factor=0.5)
 
     # Resume from checkpoint if given
     start_epoch = 1
@@ -303,7 +326,8 @@ def main():
 
     for epoch in range(start_epoch, args.epochs + 1):
         t0        = time.time()
-        train_m   = train_one_epoch(model, train_loader, optimizer, criterion, device)
+        train_m   = train_one_epoch(model, train_loader, optimizer, criterion, device,
+                                    is_dann=is_dann, epoch=epoch, total_epochs=args.epochs)
         val_m     = evaluate(model, val_loader, device, split_name="val")
         epoch_sec = time.time() - t0
 
