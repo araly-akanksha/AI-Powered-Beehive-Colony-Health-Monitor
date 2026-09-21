@@ -25,9 +25,7 @@ export default function Header({ status, viewMode, onViewModeChange }) {
 
       <div className="app-header__controls">
         <a
-          href="/live.html"
-          target="_blank"
-          rel="noopener noreferrer"
+          href="/"
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -36,16 +34,16 @@ export default function Header({ status, viewMode, onViewModeChange }) {
             borderRadius: "9999px",
             fontSize: "0.75rem",
             fontWeight: 700,
-            background: "rgba(245, 158, 11, 0.15)",
+            background: "rgba(245, 158, 11, 0.2)",
             color: "#f59e0b",
-            border: "1px solid rgba(245, 158, 11, 0.35)",
+            border: "1px solid rgba(245, 158, 11, 0.4)",
             textDecoration: "none",
-            boxShadow: "0 0 10px rgba(245, 158, 11, 0.15)"
+            boxShadow: "0 0 12px rgba(245, 158, 11, 0.2)"
           }}
-          title="Open Live 60FPS Waterfall & Web Audio Sentinel"
+          title="Open Interactive 3D Acoustic Topography & Sentinel UI"
         >
-          <span>✨</span>
-          <span>Live Sentinel UI</span>
+          <span>🌌</span>
+          <span>3D Sentinel View</span>
         </a>
 
         {DEMO_MODE && <StatusPill tone="neutral">Demo Mode</StatusPill>}

@@ -1,10 +1,10 @@
 /* ── Design tokens ────────────────────────────────────────────────────── */
 :root {
-  --bg: #0f172a;
-  --bg-elevated: #16213a;
-  --bg-elevated-2: #1b2843;
-  --border: #26314d;
-  --border-strong: #37456a;
+  --bg: #060a12;
+  --bg-elevated: #0d1527;
+  --bg-elevated-2: #111d35;
+  --border: #1e293b;
+  --border-strong: #334155;
 
   --text-primary: #e9edf5;
   --text-secondary: #8d97ad;
@@ -41,7 +41,7 @@ body,
 
 body {
   margin: 0;
-  background: radial-gradient(120% 140% at 15% -10%, #17233f 0%, var(--bg) 55%);
+  background: radial-gradient(circle at top center, #111d35 0%, #060a12 60%, #03060a 100%);
   color: var(--text-primary);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
