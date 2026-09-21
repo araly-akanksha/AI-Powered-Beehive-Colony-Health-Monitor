@@ -3,19 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Beehive Health Monitor — Live Acoustic AI</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Acoustic Hive Sentinel 3D — Bioacoustic AI</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <script>
-    if (!window.tailwind) {
-      document.write('<script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"><\/script>');
-    }
     // Inject fallback CSS theme variables when loaded standalone (e.g. on Vercel)
     (function() {
       const card = getComputedStyle(document.documentElement).getPropertyValue('--card').trim();
       if (!card) {
         const root = document.documentElement;
-        root.style.setProperty('--background', '#0b0f19');
-        root.style.setProperty('--card', '#111827');
+        root.style.setProperty('--background', '#060a12');
+        root.style.setProperty('--card', '#0d1527');
         root.style.setProperty('--foreground', '#f8fafc');
         root.style.setProperty('--muted-foreground', '#94a3b8');
         root.style.setProperty('--border', '#1e293b');
@@ -24,437 +21,459 @@
     })();
   </script>
   <style>
-    @keyframes radar-ping {
-      0% { transform: scale(0.95); opacity: 0.8; }
-      50% { transform: scale(1.15); opacity: 0.2; }
-      100% { transform: scale(0.95); opacity: 0.8; }
+    @keyframes orbit {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
-    @keyframes sweep {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
+    @keyframes float-gentle {
+      0%, 100% { transform: translateY(0px) rotate3d(1, 1, 0, 0deg); }
+      50% { transform: translateY(-5px) rotate3d(1, 1, 0, 3deg); }
     }
-    @keyframes wave-bounce {
-      0%, 100% { transform: scaleY(0.3); }
-      50% { transform: scaleY(1); }
+    @keyframes shimmer-sweep {
+      0% { transform: translateX(-150%) skewX(-20deg); }
+      100% { transform: translateX(250%) skewX(-20deg); }
     }
-    .radar-pulse { animation: radar-ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite; }
-    .scanning-line {
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.8; transform: scale(1); }
+      50% { opacity: 0.3; transform: scale(1.18); }
+    }
+
+    .shimmer-effect::after {
+      content: '';
       position: absolute;
-      top: 0; bottom: 0; width: 2px;
-      background: linear-gradient(180deg, rgba(245,158,11,0) 0%, rgba(245,158,11,0.9) 50%, rgba(245,158,11,0) 100%);
-      box-shadow: 0 0 10px rgba(245,158,11,0.8);
+      top: 0; left: 0; width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+      animation: shimmer-sweep 4s infinite ease-in-out;
+      pointer-events: none;
     }
-    .smooth-transition { transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
-    .honeycomb-bg {
-      background-image: radial-gradient(rgba(245, 158, 11, 0.08) 1px, transparent 1px);
-      background-size: 16px 16px;
+
+    .float-3d { animation: float-gentle 4s ease-in-out infinite; }
+    .orbit-spin { animation: orbit 14s linear infinite; }
+    .pulse-ring { animation: pulse-glow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+    .glow-gold { box-shadow: 0 0 35px rgba(245, 158, 11, 0.25), inset 0 0 20px rgba(245, 158, 11, 0.1); }
+    .glow-emerald { box-shadow: 0 0 35px rgba(16, 185, 129, 0.3), inset 0 0 15px rgba(16, 185, 129, 0.1); }
+    .glow-rose { box-shadow: 0 0 35px rgba(244, 63, 94, 0.3), inset 0 0 15px rgba(244, 63, 94, 0.1); }
+
+    .card-3d {
+      transform-style: preserve-3d;
+      transition: transform 0.25s ease-out, box-shadow 0.25s ease-out, border-color 0.25s ease;
     }
-    .glow-emerald { box-shadow: 0 0 20px rgba(16, 185, 129, 0.25); }
-    .glow-rose { box-shadow: 0 0 20px rgba(244, 63, 94, 0.25); }
-    .glow-amber { box-shadow: 0 0 20px rgba(245, 158, 11, 0.25); }
+
+    .honeycomb-pattern {
+      background-image: 
+        radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.12) 1px, transparent 1px),
+        radial-gradient(circle at 0% 100%, rgba(6, 182, 212, 0.08) 1px, transparent 1px);
+      background-size: 20px 20px, 30px 30px;
+    }
+
     body.standalone {
-      background-color: #0b0f19;
+      background: radial-gradient(circle at top center, #111d35 0%, #060a12 60%, #03060a 100%);
       min-height: 100vh;
     }
   </style>
 </head>
 <body class="bg-transparent text-[var(--foreground)] antialiased p-1 sm:p-3 selection:bg-amber-500/30">
 
-  <!-- Main Container -->
-  <div class="max-w-4xl mx-auto bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl relative">
+  <!-- Main 3D Card Shell with Perspective -->
+  <div style="perspective: 1200px;" class="max-w-4xl mx-auto">
+    <div id="main-container" class="card-3d bg-[var(--card)] text-[var(--foreground)] border border-amber-500/25 rounded-3xl shadow-2xl overflow-hidden backdrop-blur-2xl relative shimmer-effect">
 
-    <!-- Ambient Honeycomb subtle decoration header -->
-    <div class="absolute top-0 right-0 w-96 h-36 honeycomb-bg pointer-events-none opacity-40"></div>
+      <!-- Ambient Bioluminescent Background Light Gradients -->
+      <div class="absolute -top-32 -left-20 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute top-1/3 -right-20 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-20 left-1/3 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-    <!-- Header Section -->
-    <header class="relative px-5 py-3.5 border-b border-[var(--border)] bg-gradient-to-r from-[var(--card)] via-[var(--card)] to-amber-500/5 flex flex-wrap items-center justify-between gap-3 z-10">
-      <div class="flex items-center gap-3.5">
-        <div class="relative flex items-center justify-center">
-          <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400/20 to-amber-600/10 border border-amber-500/30 flex items-center justify-center text-2xl shadow-inner">
-            🐝
-          </div>
-          <span class="absolute -top-1 -right-1 flex h-3 w-3">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-[var(--card)]"></span>
-          </span>
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-base font-extrabold tracking-tight text-[var(--foreground)]">Acoustic Hive Sentinel</h1>
-            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-500 border border-amber-500/30 tracking-wide uppercase">
-              LIVE SOTA DANN
-            </span>
-          </div>
-          <p class="text-xs text-[var(--muted-foreground)]">Bioacoustic Surveillance & Domain-Invariant Deep Learning</p>
-        </div>
-      </div>
-
-      <!-- Quick Status Badges -->
-      <div class="flex items-center gap-2">
-        <div class="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[var(--background)]/80 border border-[var(--border)] text-xs font-medium">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span class="text-[var(--muted-foreground)]">Sampling:</span>
-          <span class="font-mono font-semibold text-[var(--foreground)]">16.0 kHz</span>
-        </div>
-        <div class="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-[var(--background)]/80 border border-[var(--border)] text-xs font-medium">
-          <span class="text-amber-500">⚡</span>
-          <span class="text-[var(--muted-foreground)]">Backbone:</span>
-          <span class="font-mono font-semibold text-amber-500">CRNN+GRL</span>
-        </div>
-      </div>
-    </header>
-
-    <!-- Quick Demo Preset Selection Chips -->
-    <div class="px-5 py-2.5 bg-[var(--background)]/70 border-b border-[var(--border)] flex flex-wrap items-center justify-between gap-2.5 z-10 relative">
-      <div class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[var(--muted-foreground)]">
-        <span class="text-amber-500">⚡</span>
-        <span>Acoustic Scenarios:</span>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <button onclick="selectPreset('known-present')" id="chip-known-present" class="chip-btn px-3 py-1 rounded-xl text-xs font-bold border smooth-transition bg-amber-500 text-slate-950 border-amber-400 shadow-md">
-          🐝 In-Domain Queen
-        </button>
-        <button onclick="selectPreset('known-absent')" id="chip-known-absent" class="chip-btn px-3 py-1 rounded-xl text-xs font-semibold border smooth-transition bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:border-amber-500/50">
-          🥀 In-Domain Absent
-        </button>
-        <button onclick="selectPreset('unseen-present')" id="chip-unseen-present" class="chip-btn px-3 py-1 rounded-xl text-xs font-semibold border smooth-transition bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:border-amber-500/50">
-          🔬 Unseen Colony Queen
-        </button>
-        <button onclick="selectPreset('unseen-absent')" id="chip-unseen-absent" class="chip-btn px-3 py-1 rounded-xl text-xs font-semibold border smooth-transition bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:border-amber-500/50">
-          🎙️ Unseen Hardware Mic
-        </button>
-      </div>
-    </div>
-
-    <!-- Active Diagnosis & Health Hero Banner -->
-    <div id="hero-banner" class="p-5 border-b border-[var(--border)] bg-gradient-to-r from-[var(--card)] via-[var(--card)]/95 to-emerald-500/10 smooth-transition relative overflow-hidden">
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
-        
-        <!-- Health Status Block -->
+      <!-- Top Header Navigation -->
+      <header class="relative px-6 py-4 border-b border-[var(--border)] bg-gradient-to-r from-[var(--card)]/95 via-[var(--card)]/90 to-amber-500/10 flex flex-wrap items-center justify-between gap-4 z-20">
         <div class="flex items-center gap-4">
-          <div class="relative">
-            <div id="status-halo" class="w-16 h-16 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-3xl shadow-sm glow-emerald smooth-transition">
-              <span id="status-icon">👑</span>
+          <!-- 3D Floating Holographic Hexagon -->
+          <div class="relative flex items-center justify-center float-3d">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400/30 via-amber-600/20 to-orange-700/10 border-2 border-amber-400/50 flex items-center justify-center text-2xl shadow-xl">
+              🐝
             </div>
-            <div id="radar-ring" class="absolute -inset-1 rounded-2xl border-2 border-emerald-500/40 radar-pulse pointer-events-none"></div>
+            <!-- Orbiting Particle Ring -->
+            <div class="absolute -inset-1.5 rounded-full border border-dashed border-amber-400/40 orbit-spin pointer-events-none"></div>
           </div>
           <div>
             <div class="flex items-center gap-2.5">
-              <h2 id="status-title" class="text-2xl font-black tracking-tight text-emerald-500 uppercase">QUEEN PRESENT</h2>
-              <span id="status-badge" class="px-2.5 py-0.5 text-[10px] font-extrabold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 uppercase tracking-widest">
-                NORMAL COLONY
+              <h1 class="text-lg font-black tracking-tight bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-500 bg-clip-text text-transparent">
+                Acoustic Sentinel 3D
+              </h1>
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-500/20 to-emerald-500/20 text-amber-300 border border-amber-400/40 tracking-wider uppercase shadow-sm">
+                SOTA DANN · 3D TOPOGRAPHY
               </span>
             </div>
-            <p id="status-subtext" class="text-xs text-[var(--muted-foreground)] mt-1 font-medium">
-              Continuous queen piping rhythm identified at 410 Hz · High harmonic acoustic coherence
-            </p>
+            <p class="text-xs text-[var(--muted-foreground)]">3D Acoustic Landscape & Cross-Hive Generalization</p>
           </div>
         </div>
 
-        <!-- Metric Gauges Block -->
-        <div class="flex flex-col sm:items-end gap-2.5">
-          <!-- OOD / Domain Shift Indicator -->
-          <div id="ood-pill" class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-sm smooth-transition">
-            <span id="ood-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span id="ood-text">Standard Apiary — In-Distribution Hive</span>
+        <!-- Right Quick Telemetry Badges -->
+        <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[var(--background)]/80 border border-cyan-500/30 text-xs font-medium shadow-sm">
+            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+            <span class="text-[var(--muted-foreground)] text-[11px]">Stream:</span>
+            <span class="font-mono font-bold text-cyan-300">16.0 kHz</span>
           </div>
-
-          <!-- Live Model Confidence Progress -->
-          <div class="w-full sm:w-64">
-            <div class="flex justify-between items-center text-xs font-semibold text-[var(--muted-foreground)] mb-1">
-              <span class="flex items-center gap-1">
-                <span>DANN Confidence</span>
-                <span class="text-[10px] text-amber-500">(Domain-Invariant)</span>
-              </span>
-              <span id="conf-val" class="font-mono text-sm font-black text-[var(--foreground)]">97.4%</span>
-            </div>
-            <div class="w-full h-3 bg-[var(--background)] rounded-full overflow-hidden border border-[var(--border)] p-0.5">
-              <div id="conf-bar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-700 ease-out shadow-sm" style="width: 97%;"></div>
-            </div>
-            <div class="flex justify-between text-[10px] text-[var(--muted-foreground)] mt-1">
-              <span>Risk: <span id="risk-val" class="font-semibold text-emerald-500">Negligible</span></span>
-              <span id="conf-sublabel" class="font-mono">Inference: 18ms (GPU)</span>
-            </div>
+          <div class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[var(--background)]/80 border border-amber-500/30 text-xs font-medium shadow-sm">
+            <span class="text-amber-400 text-xs">⚡</span>
+            <span class="text-[var(--muted-foreground)] text-[11px]">Invariance:</span>
+            <span class="font-mono font-bold text-amber-400">GRL Active</span>
           </div>
         </div>
+      </header>
 
-      </div>
-    </div>
-
-    <!-- Main Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 p-5 bg-[var(--background)]/35">
-
-      <!-- Left Column (Span 6): Model Comparison & Bioacoustics -->
-      <div class="lg:col-span-6 flex flex-col gap-4">
-
-        <!-- Panel 1: Multi-Model Evaluation -->
-        <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 shadow-sm relative overflow-hidden">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2">
-              <span class="p-1 rounded-lg bg-amber-500/10 text-amber-500 text-xs">🔬</span>
-              <h3 class="text-xs font-extrabold uppercase tracking-wider text-[var(--foreground)]">
-                Cross-Hive Generalization Matrix
-              </h3>
-            </div>
-            <span class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[var(--background)] text-[var(--muted-foreground)] border border-[var(--border)]">
-              3 Models Evaluated
-            </span>
-          </div>
-
-          <!-- Model 1: Baseline CNN -->
-          <div id="card-m1" class="p-3 mb-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)]/50 smooth-transition">
-            <div class="flex justify-between items-center text-xs mb-1.5">
-              <div class="flex items-center gap-1.5">
-                <span class="font-bold text-[var(--foreground)]">1. Baseline CNN</span>
-                <span class="text-[10px] text-[var(--muted-foreground)] font-mono">(93k params)</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span id="m1-tag" class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
-                  Queen Present
-                </span>
-                <span id="m1-val" class="font-mono font-bold text-xs">92.1%</span>
-              </div>
-            </div>
-            <div class="w-full h-2 bg-[var(--card)] rounded-full overflow-hidden border border-[var(--border)]">
-              <div id="m1-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: 92%;"></div>
-            </div>
-            <div class="text-[10px] text-[var(--muted-foreground)] mt-1 flex justify-between">
-              <span>Standard 4-Layer Conv2D</span>
-              <span id="m1-note" class="text-emerald-500 font-medium">Valid prediction</span>
-            </div>
-          </div>
-
-          <!-- Model 2: CRNN -->
-          <div id="card-m2" class="p-3 mb-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)]/50 smooth-transition">
-            <div class="flex justify-between items-center text-xs mb-1.5">
-              <div class="flex items-center gap-1.5">
-                <span class="font-bold text-[var(--foreground)]">2. CRNN + Attention</span>
-                <span class="text-[10px] text-[var(--muted-foreground)] font-mono">(2.59M params)</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span id="m2-tag" class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
-                  Queen Present
-                </span>
-                <span id="m2-val" class="font-mono font-bold text-xs">95.4%</span>
-              </div>
-            </div>
-            <div class="w-full h-2 bg-[var(--card)] rounded-full overflow-hidden border border-[var(--border)]">
-              <div id="m2-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: 95%;"></div>
-            </div>
-            <div class="text-[10px] text-[var(--muted-foreground)] mt-1 flex justify-between">
-              <span>Bi-GRU Temporal Modeling</span>
-              <span id="m2-note" class="text-emerald-500 font-medium">Captures rhythmic piping</span>
-            </div>
-          </div>
-
-          <!-- Model 3: DANN (Highlight) -->
-          <div id="card-m3" class="p-3 rounded-xl border border-amber-500/40 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent smooth-transition shadow-sm">
-            <div class="flex justify-between items-center text-xs mb-1.5">
-              <div class="flex items-center gap-1.5">
-                <span class="font-black text-amber-500 flex items-center gap-1">
-                  <span>3. DANN (Our Model)</span>
-                  <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500 text-slate-950 font-extrabold uppercase">SOTA</span>
-                </span>
-                <span class="text-[10px] text-amber-500/70 font-mono">(GRL Alpha=0.67)</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <span id="m3-tag" class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
-                  Queen Present
-                </span>
-                <span id="m3-val" class="font-mono font-bold text-xs text-amber-500">97.4%</span>
-              </div>
-            </div>
-            <div class="w-full h-2.5 bg-[var(--card)] rounded-full overflow-hidden border border-[var(--border)]">
-              <div id="m3-bar" class="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500" style="width: 97%;"></div>
-            </div>
-            <div class="text-[10px] text-amber-500/90 mt-1 flex justify-between">
-              <span>Domain Adversarial Alignment (12 Hives)</span>
-              <span id="m3-note" class="font-bold">Invariant to hive acoustics</span>
-            </div>
-          </div>
-
-          <!-- Research Insight Box -->
-          <div class="mt-3 p-3 rounded-xl bg-[var(--background)]/90 border border-[var(--border)] text-xs flex items-start gap-2.5">
-            <span class="text-base text-amber-500 shrink-0">💡</span>
-            <div class="text-[11px] leading-relaxed">
-              <span class="font-bold text-[var(--foreground)]">Experiment Takeaway: </span>
-              <span id="insight-text" class="text-[var(--muted-foreground)]">
-                In-domain soundscapes share similar background resonances, so all models agree easily. Switch to "Unseen Colony Queen" above to observe the Baseline CNN fail while DANN retains high accuracy!
-              </span>
-            </div>
-          </div>
+      <!-- Scenario Selector Buttons -->
+      <div class="px-6 py-3 bg-[var(--background)]/75 border-b border-[var(--border)] flex flex-wrap items-center justify-between gap-2.5 z-20 relative">
+        <div class="flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-[var(--muted-foreground)]">
+          <span class="text-amber-400">⚡</span>
+          <span>Acoustic Colony Scenarios:</span>
         </div>
-
-        <!-- Panel 2: Bioacoustic DSP Metrics -->
-        <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 shadow-sm">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2">
-              <span class="p-1 rounded-lg bg-emerald-500/10 text-emerald-500 text-xs">📊</span>
-              <h3 class="text-xs font-extrabold uppercase tracking-wider text-[var(--foreground)]">
-                Bioacoustic Acoustic Telemetry
-              </h3>
-            </div>
-            <span class="text-[10px] text-[var(--muted-foreground)] font-mono">Librosa Feature Extraction</span>
-          </div>
-
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-            <div class="p-2.5 rounded-xl bg-[var(--background)]/60 border border-[var(--border)]">
-              <span class="text-[10px] font-semibold text-[var(--muted-foreground)] block">Spectral Centroid</span>
-              <span id="m-centroid" class="text-sm font-mono font-bold text-amber-400 block mt-0.5">1,842 Hz</span>
-              <span class="text-[9px] text-[var(--muted-foreground)]">Center of mass</span>
-            </div>
-            <div class="p-2.5 rounded-xl bg-[var(--background)]/60 border border-[var(--border)]">
-              <span class="text-[10px] font-semibold text-[var(--muted-foreground)] block">Energy (RMS)</span>
-              <span id="m-rms" class="text-sm font-mono font-bold text-emerald-400 block mt-0.5">0.0051</span>
-              <span class="text-[9px] text-[var(--muted-foreground)]">Colony amplitude</span>
-            </div>
-            <div class="p-2.5 rounded-xl bg-[var(--background)]/60 border border-[var(--border)]">
-              <span class="text-[10px] font-semibold text-[var(--muted-foreground)] block">Zero Crossing (ZCR)</span>
-              <span id="m-zcr" class="text-sm font-mono font-bold text-cyan-400 block mt-0.5">0.061</span>
-              <span class="text-[9px] text-[var(--muted-foreground)]">Noisiness ratio</span>
-            </div>
-            <div class="p-2.5 rounded-xl bg-[var(--background)]/60 border border-[var(--border)]">
-              <span class="text-[10px] font-semibold text-[var(--muted-foreground)] block">Dominant Band</span>
-              <span id="m-band" class="text-sm font-mono font-bold text-indigo-400 block mt-0.5">400 - 800 Hz</span>
-              <span class="text-[9px] text-[var(--muted-foreground)]">Piping harmonics</span>
-            </div>
-          </div>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="selectPreset('known-present')" id="chip-known-present" class="chip-btn px-3 py-1.5 rounded-xl text-xs font-bold border transition-all duration-300 bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 border-amber-300 shadow-md">
+            🐝 In-Domain Queen
+          </button>
+          <button onclick="selectPreset('known-absent')" id="chip-known-absent" class="chip-btn px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-300 bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:border-amber-500/50">
+            🥀 In-Domain Absent
+          </button>
+          <button onclick="selectPreset('unseen-present')" id="chip-unseen-present" class="chip-btn px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-300 bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:border-amber-500/50">
+            🔬 Unseen Colony Queen (Test)
+          </button>
+          <button onclick="selectPreset('unseen-absent')" id="chip-unseen-absent" class="chip-btn px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-300 bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:border-amber-500/50">
+            🎙️ Unseen Hardware MEMS
+          </button>
         </div>
-
       </div>
 
-      <!-- Right Column (Span 6): Real-Time Spectrogram & Audio Player -->
-      <div class="lg:col-span-6 flex flex-col gap-4">
-
-        <!-- Panel 3: Continuous Animated Waterfall Spectrogram -->
-        <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 shadow-sm flex flex-col">
-          <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center gap-2">
-              <span class="p-1 rounded-lg bg-cyan-500/10 text-cyan-400 text-xs">🌈</span>
-              <h3 class="text-xs font-extrabold uppercase tracking-wider text-[var(--foreground)]">
-                Live Waterfall Spectrogram
-              </h3>
+      <!-- Hero Health Diagnosis & 3D Holographic Medal -->
+      <div id="hero-banner" class="p-6 border-b border-[var(--border)] bg-gradient-to-r from-[var(--card)] via-[var(--card)]/95 to-emerald-500/10 transition-all duration-500 relative overflow-hidden">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+          
+          <!-- Holographic 3D Icon & Diagnosis -->
+          <div class="flex items-center gap-5">
+            <div class="relative flex items-center justify-center">
+              <div id="status-halo" class="w-18 h-18 p-4 rounded-3xl bg-gradient-to-br from-emerald-500/25 to-teal-700/10 border-2 border-emerald-400/50 flex items-center justify-center text-4xl shadow-2xl glow-emerald transition-all duration-500">
+                <span id="status-icon">👑</span>
+              </div>
+              <!-- Outer Glowing Radar Wave -->
+              <div id="radar-ring" class="absolute -inset-2 rounded-3xl border-2 border-emerald-400/30 pulse-ring pointer-events-none"></div>
             </div>
-            <div class="flex items-center gap-2">
-              <span class="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                RUNNING (60 FPS)
+            <div>
+              <div class="flex items-center gap-3">
+                <h2 id="status-title" class="text-2xl font-black tracking-tight text-emerald-400 uppercase">
+                  QUEEN PRESENT
+                </h2>
+                <span id="status-badge" class="px-3 py-0.5 text-[10px] font-black rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 uppercase tracking-widest shadow-sm">
+                  HEALTHY COLONY
+                </span>
+              </div>
+              <p id="status-subtext" class="text-xs text-[var(--muted-foreground)] mt-1.5 font-medium max-w-lg">
+                Coherent queen piping harmonics localized at 410 Hz · Low acoustic distress variance
+              </p>
+            </div>
+          </div>
+
+          <!-- Live Model Confidence & OOD Status -->
+          <div class="flex flex-col sm:items-end gap-3">
+            <div id="ood-pill" class="inline-flex items-center gap-2 px-4 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-400/40 shadow-sm transition-all">
+              <span id="ood-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span id="ood-text">Standard Apiary — In-Distribution Hive</span>
+            </div>
+
+            <!-- Glowing Dual-Tone Confidence Gauge -->
+            <div class="w-full sm:w-64">
+              <div class="flex justify-between items-center text-xs font-bold text-[var(--muted-foreground)] mb-1.5">
+                <span class="flex items-center gap-1.5">
+                  <span class="text-amber-400 font-extrabold">DANN SOTA</span>
+                  <span class="text-[10px] text-[var(--muted-foreground)]">(Domain-Invariant)</span>
+                </span>
+                <span id="conf-val" class="font-mono text-base font-black text-amber-400">97.4%</span>
+              </div>
+              <div class="w-full h-3.5 bg-slate-950/80 rounded-full overflow-hidden border border-amber-500/30 p-0.5 shadow-inner">
+                <div id="conf-bar" class="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-emerald-400 rounded-full transition-all duration-700 ease-out shadow-lg" style="width: 97%;"></div>
+              </div>
+              <div class="flex justify-between text-[10px] text-[var(--muted-foreground)] mt-1.5 font-mono">
+                <span>Alert Risk: <span id="risk-val" class="font-bold text-emerald-400">Negligible</span></span>
+                <span>Inference: 14ms (GPU)</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Dashboard Body Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 p-6 bg-[var(--background)]/40 honeycomb-pattern">
+
+        <!-- Left Column: Multi-Model Evaluation & Bioacoustics -->
+        <div class="lg:col-span-6 flex flex-col gap-4">
+
+          <!-- 3-Model Comparison Matrix -->
+          <div class="bg-[var(--card)]/90 border border-[var(--border)] rounded-2xl p-4 shadow-xl relative overflow-hidden backdrop-blur-md">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <span class="p-1.5 rounded-xl bg-amber-500/15 text-amber-400 text-xs shadow-inner">🔬</span>
+                <h3 class="text-xs font-black uppercase tracking-wider text-[var(--foreground)]">
+                  Cross-Hive Generalization Benchmarks
+                </h3>
+              </div>
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-950 text-amber-400 border border-amber-500/30">
+                Ablation Sequence
               </span>
-              <span class="text-[10px] text-[var(--muted-foreground)] font-mono">128 Mel Bands</span>
+            </div>
+
+            <!-- Model 1: Baseline CNN -->
+            <div id="card-m1" class="p-3 mb-2.5 rounded-xl border border-[var(--border)] bg-slate-950/50 transition-all">
+              <div class="flex justify-between items-center text-xs mb-1.5">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-bold text-[var(--foreground)]">1. Baseline CNN</span>
+                  <span class="text-[10px] text-[var(--muted-foreground)] font-mono">(93k params)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span id="m1-tag" class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                    Queen Present
+                  </span>
+                  <span id="m1-val" class="font-mono font-bold text-xs">92.1%</span>
+                </div>
+              </div>
+              <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-[var(--border)]">
+                <div id="m1-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: 92%;"></div>
+              </div>
+              <div class="text-[10px] text-[var(--muted-foreground)] mt-1 flex justify-between">
+                <span>Spatial 2D Conv Blocks</span>
+                <span id="m1-note" class="text-emerald-400 font-medium">Valid prediction</span>
+              </div>
+            </div>
+
+            <!-- Model 2: CRNN -->
+            <div id="card-m2" class="p-3 mb-2.5 rounded-xl border border-[var(--border)] bg-slate-950/50 transition-all">
+              <div class="flex justify-between items-center text-xs mb-1.5">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-bold text-[var(--foreground)]">2. CRNN + Attention</span>
+                  <span class="text-[10px] text-[var(--muted-foreground)] font-mono">(2.59M params)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span id="m2-tag" class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                    Queen Present
+                  </span>
+                  <span id="m2-val" class="font-mono font-bold text-xs">95.4%</span>
+                </div>
+              </div>
+              <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-[var(--border)]">
+                <div id="m2-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: 95%;"></div>
+              </div>
+              <div class="text-[10px] text-[var(--muted-foreground)] mt-1 flex justify-between">
+                <span>Bi-GRU Temporal Dynamics</span>
+                <span id="m2-note" class="text-emerald-400 font-medium">Captures rhythmic piping</span>
+              </div>
+            </div>
+
+            <!-- Model 3: DANN SOTA -->
+            <div id="card-m3" class="p-3 rounded-xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent transition-all shadow-md">
+              <div class="flex justify-between items-center text-xs mb-1.5">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-black text-amber-400 flex items-center gap-1">
+                    <span>3. DANN (Our Model)</span>
+                    <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-400 text-slate-950 font-black uppercase shadow-sm">SOTA</span>
+                  </span>
+                  <span class="text-[10px] text-amber-400/80 font-mono">(LayerNorm + GRL)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span id="m3-tag" class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                    Queen Present
+                  </span>
+                  <span id="m3-val" class="font-mono font-bold text-xs text-amber-400">97.4%</span>
+                </div>
+              </div>
+              <div class="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden border border-amber-500/40">
+                <div id="m3-bar" class="h-full bg-gradient-to-r from-amber-500 to-amber-300 rounded-full transition-all duration-500" style="width: 97%;"></div>
+              </div>
+              <div class="text-[10px] text-amber-400/90 mt-1 flex justify-between">
+                <span>Adversarial Gradient Reversal (12 Hives)</span>
+                <span id="m3-note" class="font-bold">Invariant to box reverberation</span>
+              </div>
+            </div>
+
+            <!-- Research Takeaway Box -->
+            <div class="mt-3 p-3 rounded-xl bg-slate-950/80 border border-amber-500/20 text-xs flex items-start gap-2.5">
+              <span class="text-base text-amber-400 shrink-0">💡</span>
+              <div class="text-[11px] leading-relaxed">
+                <span class="font-bold text-amber-300">Acoustic Shift Insight: </span>
+                <span id="insight-text" class="text-[var(--muted-foreground)]">
+                  In-domain soundscapes share similar apiary resonances, so all models agree. Click "Unseen Colony Queen" above to watch Baseline CNN fail while DANN sustains high accuracy!
+                </span>
+              </div>
             </div>
           </div>
 
-          <!-- Spectrogram Canvas Container -->
-          <div class="relative w-full h-48 rounded-xl overflow-hidden border border-[var(--border)] bg-slate-950 flex items-center justify-center group">
-            <canvas id="spectrogram-canvas" class="w-full h-full block"></canvas>
-            
-            <!-- Scanning Line -->
-            <div class="scanning-line" style="right: 15px;"></div>
+          <!-- Bioacoustic DSP Telemetry -->
+          <div class="bg-[var(--card)]/90 border border-[var(--border)] rounded-2xl p-4 shadow-xl backdrop-blur-md">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <span class="p-1.5 rounded-xl bg-emerald-500/15 text-emerald-400 text-xs shadow-inner">📊</span>
+                <h3 class="text-xs font-black uppercase tracking-wider text-[var(--foreground)]">
+                  Bioacoustic DSP Metrics
+                </h3>
+              </div>
+              <span class="text-[10px] text-[var(--muted-foreground)] font-mono">Librosa Feature Extraction</span>
+            </div>
 
-            <!-- Overlaid Frequency Scales -->
-            <div class="absolute left-2.5 top-2.5 text-[9px] font-mono text-amber-300 bg-slate-900/80 px-1.5 py-0.5 rounded border border-amber-500/30 backdrop-blur-sm">
-              8,000 Hz · High Frequencies
-            </div>
-            <div class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[9px] font-mono text-emerald-300 bg-slate-900/80 px-1.5 py-0.5 rounded border border-emerald-500/30 backdrop-blur-sm">
-              400 - 800 Hz · Queen Piping
-            </div>
-            <div class="absolute left-2.5 bottom-2.5 text-[9px] font-mono text-cyan-300 bg-slate-900/80 px-1.5 py-0.5 rounded border border-cyan-500/30 backdrop-blur-sm">
-              100 Hz · Colony Fundamental
-            </div>
-            <div class="absolute right-2.5 bottom-2.5 text-[9px] font-mono text-slate-300 bg-slate-900/80 px-2 py-0.5 rounded border border-slate-700/50 backdrop-blur-sm flex items-center gap-1">
-              <span>Window:</span> <span class="text-amber-400 font-bold">2.0s</span>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+              <div class="p-2.5 rounded-xl bg-slate-950/60 border border-[var(--border)]">
+                <span class="text-[10px] font-semibold text-[var(--muted-foreground)] block">Spectral Centroid</span>
+                <span id="m-centroid" class="text-sm font-mono font-bold text-amber-400 block mt-0.5">1,842 Hz</span>
+                <span class="text-[9px] text-[var(--muted-foreground)]">Spectral balance</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-950/60 border border-[var(--border)]">
+                <span class="text-[10px] font-semibold text-[var(--muted-foreground)] block">Energy (RMS)</span>
+                <span id="m-rms" class="text-sm font-mono font-bold text-emerald-400 block mt-0.5">0.0051</span>
+                <span class="text-[9px] text-[var(--muted-foreground)]">Colony amplitude</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-950/60 border border-[var(--border)]">
+                <span class="text-[10px] font-semibold text-[var(--muted-foreground)] block">Zero Crossing Rate</span>
+                <span id="m-zcr" class="text-sm font-mono font-bold text-cyan-400 block mt-0.5">0.061</span>
+                <span class="text-[9px] text-[var(--muted-foreground)]">Harmonic noisiness</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-950/60 border border-[var(--border)]">
+                <span class="text-[10px] font-semibold text-[var(--muted-foreground)] block">Piping Band</span>
+                <span id="m-band" class="text-sm font-mono font-bold text-indigo-400 block mt-0.5">400 - 800 Hz</span>
+                <span class="text-[9px] text-[var(--muted-foreground)]">Fundamental & 1st</span>
+              </div>
             </div>
           </div>
 
-          <!-- Color Heatmap Legend -->
-          <div class="mt-2.5 flex items-center justify-between text-[10px] text-[var(--muted-foreground)] px-1">
-            <div class="flex items-center gap-1.5">
-              <span class="w-3 h-2 rounded bg-slate-900 border border-slate-700"></span>
-              <span>Silence</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="w-3 h-2 rounded bg-cyan-700"></span>
-              <span>Colony Drone</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="w-3 h-2 rounded bg-amber-500"></span>
-              <span>Harmonic Energy</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="w-3 h-2 rounded bg-amber-200"></span>
-              <span>Peak Piping</span>
-            </div>
-          </div>
         </div>
 
-        <!-- Panel 4: Audio Player & Procedural Sound Engine -->
-        <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-4 shadow-sm">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2">
-              <span class="p-1 rounded-lg bg-amber-500/10 text-amber-500 text-xs">🎧</span>
-              <h3 class="text-xs font-extrabold uppercase tracking-wider text-[var(--foreground)]">
-                Audio Stream & Acoustic Player
-              </h3>
-            </div>
-            <span class="text-[10px] font-mono text-[var(--muted-foreground)]">Web Audio Synthesizer</span>
-          </div>
+        <!-- Right Column: 3D Topographic Soundscape & Audio Player -->
+        <div class="lg:col-span-6 flex flex-col gap-4">
 
-          <!-- Main Playback Bar -->
-          <div class="p-3 rounded-xl bg-[var(--background)]/70 border border-[var(--border)] flex items-center gap-3">
-            <button id="play-btn" onclick="toggleAudioPlayback()" class="w-12 h-12 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 flex items-center justify-center text-xl font-black smooth-transition shadow-lg shrink-0">
-              <span id="play-icon">▶</span>
-            </button>
-            <div class="flex-1 min-w-0">
-              <div class="flex justify-between text-xs font-bold truncate text-[var(--foreground)]">
-                <span id="clip-title" class="truncate">Hive1_QueenBee_15_00.wav</span>
-                <span id="audio-time" class="font-mono text-xs text-amber-500">00:00 / 02:00</span>
+          <!-- 3D Acoustic Topography / Spectrogram Canvas -->
+          <div class="bg-[var(--card)]/90 border border-[var(--border)] rounded-2xl p-4 shadow-xl flex flex-col backdrop-blur-md">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="p-1.5 rounded-xl bg-cyan-500/15 text-cyan-400 text-xs shadow-inner">🌌</span>
+                <h3 class="text-xs font-black uppercase tracking-wider text-[var(--foreground)]">
+                  3D Acoustic Topography Canvas
+                </h3>
               </div>
+
+              <!-- View Switcher (3D Mesh vs 2D Waterfall) -->
+              <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-[var(--border)] text-[10px] font-bold">
+                <button id="btn-mode-3d" onclick="setRenderMode('3d')" class="px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 shadow-sm transition">
+                  3D Topo
+                </button>
+                <button id="btn-mode-2d" onclick="setRenderMode('2d')" class="px-2.5 py-1 rounded-lg text-[var(--muted-foreground)] hover:text-white transition">
+                  2D Waterfall
+                </button>
+              </div>
+            </div>
+
+            <!-- Canvas Viewport with 3D Interaction -->
+            <div class="relative w-full h-52 rounded-xl overflow-hidden border border-amber-500/30 bg-slate-950 flex items-center justify-center cursor-grab active:cursor-grabbing group shadow-inner" id="canvas-container">
+              <canvas id="spectrogram-canvas" class="w-full h-full block"></canvas>
               
-              <!-- Live Frequency Visualizer Equalizer Bars -->
-              <div id="visualizer-bars" class="flex items-end gap-1 h-6 mt-1.5 overflow-hidden">
-                <!-- Javascript will inject 34 equalizer bars -->
+              <!-- 3D Rotation Overlay Hint -->
+              <div class="absolute right-2.5 top-2.5 text-[9px] font-mono text-cyan-300 bg-slate-900/80 px-2 py-0.5 rounded border border-cyan-500/30 backdrop-blur-sm opacity-80 group-hover:opacity-100 transition">
+                <span id="topo-hint">🖱️ Drag to Rotate 3D Mesh</span>
+              </div>
+
+              <!-- Frequency Legend Overlay -->
+              <div class="absolute left-2.5 bottom-2.5 text-[9px] font-mono text-amber-300 bg-slate-900/80 px-2 py-0.5 rounded border border-amber-500/30 backdrop-blur-sm flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+                <span>Piping Peak: ~415 Hz</span>
+              </div>
+            </div>
+
+            <!-- Color Altitude Legend -->
+            <div class="mt-2.5 flex items-center justify-between text-[10px] text-[var(--muted-foreground)] px-1">
+              <div class="flex items-center gap-1.5">
+                <span class="w-3 h-2 rounded bg-slate-950 border border-slate-700"></span>
+                <span>Noise Floor</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-3 h-2 rounded bg-cyan-600"></span>
+                <span>Colony Drone</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-3 h-2 rounded bg-amber-500"></span>
+                <span>Piping Ridge</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-3 h-2 rounded bg-yellow-200"></span>
+                <span>Peak Harmonics</span>
               </div>
             </div>
           </div>
 
-          <!-- Audio Engine Note -->
-          <div class="mt-2.5 flex items-center justify-between text-[11px] text-[var(--muted-foreground)]">
-            <span class="flex items-center gap-1 text-emerald-500">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Audio engine ready (Press ▶ to audition authentic buzz)
-            </span>
-            <button onclick="toggleAudioMute()" id="btn-mute" class="hover:text-amber-500 smooth-transition font-mono text-[10px]">
-              🔊 Audio: ON
-            </button>
+          <!-- Web Audio Synthesizer Bar -->
+          <div class="bg-[var(--card)]/90 border border-[var(--border)] rounded-2xl p-4 shadow-xl backdrop-blur-md">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <span class="p-1.5 rounded-xl bg-amber-500/15 text-amber-400 text-xs shadow-inner">🎧</span>
+                <h3 class="text-xs font-black uppercase tracking-wider text-[var(--foreground)]">
+                  Audio Stream & Web Synthesizer
+                </h3>
+              </div>
+              <span class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                Synthesizer Active
+              </span>
+            </div>
+
+            <!-- Playback Bar -->
+            <div class="p-3.5 rounded-2xl bg-slate-950/80 border border-amber-500/20 flex items-center gap-3.5 shadow-inner">
+              <button id="play-btn" onclick="toggleAudioPlayback()" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 flex items-center justify-center text-xl font-black transition-all shadow-lg active:scale-95 shrink-0">
+                <span id="play-icon">▶</span>
+              </button>
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between text-xs font-bold truncate text-[var(--foreground)]">
+                  <span id="clip-title" class="truncate font-mono">Hive1_QueenBee_15_00.wav</span>
+                  <span id="audio-time" class="font-mono text-xs text-amber-400">00:00 / 02:00</span>
+                </div>
+                
+                <!-- Dynamic Waveform Visualizer -->
+                <div id="visualizer-bars" class="flex items-end gap-1 h-6 mt-1.5 overflow-hidden">
+                  <!-- Javascript will inject 34 dynamic equalizer bars -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Controls and Volume -->
+            <div class="mt-2.5 flex items-center justify-between text-[11px] text-[var(--muted-foreground)]">
+              <span class="flex items-center gap-1.5 text-emerald-400 font-medium">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                Web Audio Ready · Audition live acoustic buzz
+              </span>
+              <button onclick="toggleAudioMute()" id="btn-mute" class="hover:text-amber-400 transition font-mono text-[10px] bg-slate-950 px-2 py-0.5 rounded border border-[var(--border)]">
+                🔊 Audio: ON
+              </button>
+            </div>
           </div>
+
         </div>
 
       </div>
 
-    </div>
+      <!-- Telemetry Console Footer -->
+      <footer class="px-6 py-3 border-t border-[var(--border)] bg-slate-950/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-mono">
+        <div class="flex items-center gap-2 text-[var(--muted-foreground)]">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span class="text-amber-400 font-bold">SENTINEL TELEMETRY:</span>
+          <span id="log-msg" class="text-[var(--foreground)] truncate">3D Acoustic landscape initialized. Listening on 16.0 kHz channel.</span>
+        </div>
+        <div class="text-[10px] text-[var(--muted-foreground)] shrink-0">
+          Cross-Hive Generalization: <span class="text-emerald-400 font-bold">95.7% (Within)</span> · <span class="text-amber-400 font-bold">64.9% (Unseen SOTA)</span>
+        </div>
+      </footer>
 
-    <!-- Live Acoustic Log / Telemetry Console -->
-    <div class="px-5 py-3 border-t border-[var(--border)] bg-[var(--background)]/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs font-mono">
-      <div class="flex items-center gap-2 text-[var(--muted-foreground)]">
-        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-        <span class="text-amber-500 font-bold">TELEMETRY:</span>
-        <span id="log-msg" class="text-[var(--foreground)] truncate">Model inference pipeline calibrated. Listening on 16 kHz stream.</span>
-      </div>
-      <div class="text-[10px] text-[var(--muted-foreground)] shrink-0">
-        Cross-Hive Accuracy: <span class="text-emerald-500 font-bold">95.7% (In-Hive)</span> · <span class="text-amber-500 font-bold">69.1% (Unseen Hives)</span>
-      </div>
     </div>
-
   </div>
 
-  <!-- Interactive JavaScript Controller -->
+  <!-- Interactive JavaScript Engine: 3D Topography + Synthesizer + Telemetry -->
   <script>
-    // Activate standalone full page styling if opened directly in browser/Vercel
     if (window.self === window.top) {
       document.body.classList.add('standalone');
     }
 
-    // Scenarios matching our real deep learning evaluation runs
     const PRESETS = {
       'known-present': {
         title: 'Hive1_QueenBee_H1_audio_15_00.wav',
@@ -464,14 +483,14 @@
         isOOD: false,
         oodText: 'Standard Apiary — In-Distribution Hive',
         conf: 97.4,
-        subtext: 'Continuous queen piping rhythm identified at 410 Hz · High harmonic acoustic coherence',
+        subtext: 'Coherent queen piping harmonics localized at 410 Hz · Low acoustic distress variance',
         risk: 'Negligible',
         models: {
           m1: { val: 92.1, tag: 'Queen Present', status: 'ok', note: 'Valid baseline prediction' },
           m2: { val: 95.4, tag: 'Queen Present', status: 'ok', note: 'Captures rhythmic piping' },
-          m3: { val: 97.4, tag: 'Queen Present', status: 'ok', note: 'Invariant to hive acoustics' }
+          m3: { val: 97.4, tag: 'Queen Present', status: 'ok', note: 'Invariant to box reverberation' }
         },
-        insight: 'In-domain soundscapes share similar background resonances, so all models agree easily (CNN: 92%, CRNN: 95%, DANN: 97%).',
+        insight: 'In-domain soundscapes share similar apiary resonances, so all models agree easily (CNN: 92%, CRNN: 95%, DANN: 97%).',
         metrics: { centroid: '1,842 Hz', rms: '0.0051', zcr: '0.061', band: '400 - 800 Hz' },
         droneFreq: 225,
         pipeFreq: 415,
@@ -485,14 +504,14 @@
         isOOD: false,
         oodText: 'Standard Apiary — In-Distribution Hive',
         conf: 95.8,
-        subtext: 'Elevated agitation buzz · Absence of 400-500 Hz organized piping harmonics',
+        subtext: 'Elevated agitated worker buzz · Total absence of organized 400-500 Hz piping pulse train',
         risk: 'High Alert',
         models: {
           m1: { val: 88.5, tag: 'Queen Absent', status: 'distress', note: 'Detects high agitation' },
           m2: { val: 91.2, tag: 'Queen Absent', status: 'distress', note: 'Noticeable piping loss' },
           m3: { val: 95.8, tag: 'Queen Absent', status: 'distress', note: 'Confident domain-free diagnosis' }
         },
-        insight: 'In-distribution queen absence: The agitated colony acoustics are well-represented in the training set.',
+        insight: 'In-distribution queen absence: Agitated worker buzzing signatures are well-represented in the training set.',
         metrics: { centroid: '1,120 Hz', rms: '0.0031', zcr: '0.108', band: '250 - 600 Hz' },
         droneFreq: 265,
         pipeFreq: 0,
@@ -513,7 +532,7 @@
           m2: { val: 95.8, tag: 'Queen Present', status: 'ok', note: 'GRU temporal pattern holds' },
           m3: { val: 94.2, tag: 'Queen Present', status: 'ok', note: '⭐ SOTA: Gradient Reversal eliminates shift' }
         },
-        insight: '⭐ CORE THESIS FINDING: The Baseline CNN collapses to 55.8% because the new wooden box alters acoustics. Our DANN model (94.2%) successfully ignores hive hardware differences!',
+        insight: '⭐ CORE RESEARCH DISCOVERY: Baseline CNN collapses to 55.8% because wooden enclosure resonance alters frequencies. Our DANN model (94.2%) successfully ignores physical box differences!',
         metrics: { centroid: '1,780 Hz', rms: '0.0048', zcr: '0.068', band: '410 - 820 Hz' },
         droneFreq: 210,
         pipeFreq: 420,
@@ -534,7 +553,7 @@
           m2: { val: 70.4, tag: 'Weak Confidence', status: 'uncertain', note: 'Reduced confidence due to mic EQ' },
           m3: { val: 91.5, tag: 'Queen Absent', status: 'distress', note: '⭐ Robustly detects missing queen' }
         },
-        insight: 'Hardware transfer test: Different MEMS microphone EQ destroys the Baseline CNN (49.3%), while DANN preserves 91.5% diagnostic power.',
+        insight: 'Hardware transferability test: Foreign MEMS microphone EQ destroys Baseline CNN (49.3%), while DANN preserves 91.5% diagnostic power.',
         metrics: { centroid: '2,240 Hz', rms: '0.0034', zcr: '0.099', band: '300 - 900 Hz' },
         droneFreq: 275,
         pipeFreq: 0,
@@ -543,6 +562,7 @@
     };
 
     let activeKey = 'known-present';
+    let renderMode = '3d'; // '3d' or '2d'
     let isPlaying = false;
     let isMuted = false;
     let playTimer = 0;
@@ -550,27 +570,32 @@
     let audioCtx = null;
     let droneOsc = null;
     let pipeOsc = null;
-    let noiseNode = null;
     let masterGain = null;
 
-    // --- Select Preset Scenario ---
+    // 3D Canvas Camera Variables
+    let rotX = 0.55;
+    let rotY = -0.35;
+    let isDragging = false;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+    let autoRotate = true;
+
+    // --- Scenario Selection ---
     function selectPreset(key) {
       activeKey = key;
       const data = PRESETS[key];
       if (!data) return;
 
-      // Update chips
       document.querySelectorAll('.chip-btn').forEach(btn => {
-        btn.classList.remove('bg-amber-500', 'text-slate-950', 'border-amber-400', 'shadow-md');
+        btn.classList.remove('bg-gradient-to-r', 'from-amber-400', 'to-amber-500', 'text-slate-950', 'border-amber-300', 'shadow-md');
         btn.classList.add('bg-[var(--card)]', 'text-[var(--foreground)]', 'border-[var(--border)]');
       });
       const activeBtn = document.getElementById(`chip-${key}`);
       if (activeBtn) {
         activeBtn.classList.remove('bg-[var(--card)]', 'text-[var(--foreground)]', 'border-[var(--border)]');
-        activeBtn.classList.add('bg-amber-500', 'text-slate-950', 'border-amber-400', 'shadow-md');
+        activeBtn.classList.add('bg-gradient-to-r', 'from-amber-400', 'to-amber-500', 'text-slate-950', 'border-amber-300', 'shadow-md');
       }
 
-      // Hero banner styling
       const isHealthy = data.isQueenPresent;
       const hero = document.getElementById('hero-banner');
       const statusTitle = document.getElementById('status-title');
@@ -589,21 +614,21 @@
       document.getElementById('risk-val').textContent = data.risk;
 
       if (isHealthy) {
-        hero.className = 'p-5 border-b border-[var(--border)] bg-gradient-to-r from-[var(--card)] via-[var(--card)]/95 to-emerald-500/10 smooth-transition relative overflow-hidden';
-        statusTitle.className = 'text-2xl font-black tracking-tight text-emerald-500 uppercase';
-        statusBadge.className = 'px-2.5 py-0.5 text-[10px] font-extrabold rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 uppercase tracking-widest';
-        statusHalo.className = 'w-16 h-16 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-3xl shadow-sm glow-emerald smooth-transition';
-        radarRing.className = 'absolute -inset-1 rounded-2xl border-2 border-emerald-500/40 radar-pulse pointer-events-none';
-        confBar.className = 'h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-700 ease-out shadow-sm';
-        document.getElementById('risk-val').className = 'font-semibold text-emerald-500';
+        hero.className = 'p-6 border-b border-[var(--border)] bg-gradient-to-r from-[var(--card)] via-[var(--card)]/95 to-emerald-500/15 transition-all duration-500 relative overflow-hidden';
+        statusTitle.className = 'text-2xl font-black tracking-tight text-emerald-400 uppercase';
+        statusBadge.className = 'px-3 py-0.5 text-[10px] font-black rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 uppercase tracking-widest shadow-sm';
+        statusHalo.className = 'w-18 h-18 p-4 rounded-3xl bg-gradient-to-br from-emerald-500/25 to-teal-700/10 border-2 border-emerald-400/50 flex items-center justify-center text-4xl shadow-2xl glow-emerald transition-all duration-500';
+        radarRing.className = 'absolute -inset-2 rounded-3xl border-2 border-emerald-400/30 pulse-ring pointer-events-none';
+        confBar.className = 'h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-emerald-400 rounded-full transition-all duration-700 ease-out shadow-lg';
+        document.getElementById('risk-val').className = 'font-bold text-emerald-400';
       } else {
-        hero.className = 'p-5 border-b border-[var(--border)] bg-gradient-to-r from-[var(--card)] via-[var(--card)]/95 to-rose-500/10 smooth-transition relative overflow-hidden';
-        statusTitle.className = 'text-2xl font-black tracking-tight text-rose-500 uppercase';
-        statusBadge.className = 'px-2.5 py-0.5 text-[10px] font-extrabold rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/40 uppercase tracking-widest';
-        statusHalo.className = 'w-16 h-16 rounded-2xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-3xl shadow-sm glow-rose smooth-transition';
-        radarRing.className = 'absolute -inset-1 rounded-2xl border-2 border-rose-500/40 radar-pulse pointer-events-none';
-        confBar.className = 'h-full bg-gradient-to-r from-rose-500 to-amber-500 rounded-full transition-all duration-700 ease-out shadow-sm';
-        document.getElementById('risk-val').className = 'font-semibold text-rose-500';
+        hero.className = 'p-6 border-b border-[var(--border)] bg-gradient-to-r from-[var(--card)] via-[var(--card)]/95 to-rose-500/15 transition-all duration-500 relative overflow-hidden';
+        statusTitle.className = 'text-2xl font-black tracking-tight text-rose-400 uppercase';
+        statusBadge.className = 'px-3 py-0.5 text-[10px] font-black rounded-full bg-rose-500/20 text-rose-300 border border-rose-400/50 uppercase tracking-widest shadow-sm';
+        statusHalo.className = 'w-18 h-18 p-4 rounded-3xl bg-gradient-to-br from-rose-500/25 to-amber-700/10 border-2 border-rose-400/50 flex items-center justify-center text-4xl shadow-2xl glow-rose transition-all duration-500';
+        radarRing.className = 'absolute -inset-2 rounded-3xl border-2 border-rose-400/30 pulse-ring pointer-events-none';
+        confBar.className = 'h-full bg-gradient-to-r from-rose-500 via-orange-400 to-amber-400 rounded-full transition-all duration-700 ease-out shadow-lg';
+        document.getElementById('risk-val').className = 'font-bold text-rose-400';
       }
 
       // OOD Pill
@@ -613,33 +638,28 @@
       oodText.textContent = data.oodText;
 
       if (data.isOOD) {
-        oodPill.className = 'inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30 shadow-sm smooth-transition';
-        oodDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-ping';
+        oodPill.className = 'inline-flex items-center gap-2 px-4 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-400/50 shadow-sm transition-all';
+        oodDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping';
       } else {
-        oodPill.className = 'inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-sm smooth-transition';
-        oodDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+        oodPill.className = 'inline-flex items-center gap-2 px-4 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-400/40 shadow-sm transition-all';
+        oodDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
       }
 
-      // Models Update
+      // Update model items
       updateModelCard('m1', data.models.m1);
       updateModelCard('m2', data.models.m2);
       updateModelCard('m3', data.models.m3);
 
-      // Insight and Metrics
       document.getElementById('insight-text').textContent = data.insight;
       document.getElementById('m-centroid').textContent = data.metrics.centroid;
       document.getElementById('m-rms').textContent = data.metrics.rms;
       document.getElementById('m-zcr').textContent = data.metrics.zcr;
       document.getElementById('m-band').textContent = data.metrics.band;
 
-      // Audio Filename & Log
       document.getElementById('clip-title').textContent = data.title;
-      addLogMessage(`Loaded preset: "${data.title}" · Domain Invariant Score: ${data.conf}%`);
+      addLogMessage(`Loaded preset: "${data.title}" · DANN Invariance Score: ${data.conf}%`);
 
-      // Update sound if currently playing
-      if (isPlaying) {
-        updateSynthesizerTones();
-      }
+      if (isPlaying) updateSynthesizerTones();
     }
 
     function updateModelCard(prefix, mData) {
@@ -654,16 +674,16 @@
       if (note) note.textContent = mData.note;
 
       if (mData.status === 'ok') {
-        tag.className = 'px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30';
+        tag.className = 'px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
         bar.className = 'h-full bg-emerald-500 rounded-full transition-all duration-500';
       } else if (mData.status === 'distress') {
-        tag.className = 'px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500/15 text-rose-500 border border-rose-500/30';
+        tag.className = 'px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/30';
         bar.className = 'h-full bg-rose-500 rounded-full transition-all duration-500';
       } else if (mData.status === 'fail') {
         tag.className = 'px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500/25 text-rose-400 border border-rose-500/50 animate-pulse';
         bar.className = 'h-full bg-rose-500/60 rounded-full transition-all duration-500';
       } else {
-        tag.className = 'px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-500 border border-amber-500/40';
+        tag.className = 'px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40';
         bar.className = 'h-full bg-amber-500/70 rounded-full transition-all duration-500';
       }
     }
@@ -673,112 +693,247 @@
       if (el) el.textContent = msg;
     }
 
-    // --- Real-time Rolling Log-Mel Spectrogram Canvas (60 FPS) ---
+    function setRenderMode(mode) {
+      renderMode = mode;
+      const b3d = document.getElementById('btn-mode-3d');
+      const b2d = document.getElementById('btn-mode-2d');
+      const hint = document.getElementById('topo-hint');
+
+      if (mode === '3d') {
+        b3d.className = 'px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 font-bold shadow-sm transition';
+        b2d.className = 'px-2.5 py-1 rounded-lg text-[var(--muted-foreground)] hover:text-white transition';
+        hint.textContent = '🖱️ Drag to Rotate 3D Mesh';
+      } else {
+        b2d.className = 'px-2.5 py-1 rounded-lg bg-amber-500 text-slate-950 font-bold shadow-sm transition';
+        b3d.className = 'px-2.5 py-1 rounded-lg text-[var(--muted-foreground)] hover:text-white transition';
+        hint.textContent = '⚡ 2D Log-Mel Waterfall Active';
+      }
+    }
+
+    // --- Interactive 3D Canvas Topography & Waterfall Engine ---
     const canvas = document.getElementById('spectrogram-canvas');
     const ctx = canvas.getContext('2d');
     let canvasW, canvasH;
-    let spectrogramBuffer = [];
-    const NUM_BANDS = 72;
-    const NUM_COLS = 130;
+    let gridCols = 36; // Time dimension in 3D
+    let gridRows = 28; // Frequency bins in 3D
+    let terrainData = [];
     let frameStep = 0;
 
-    function resizeSpectrogram() {
+    function resizeCanvas() {
       const dpr = window.devicePixelRatio || 1;
-      canvasW = canvas.clientWidth || 400;
-      canvasH = canvas.clientHeight || 190;
+      canvasW = canvas.clientWidth || 420;
+      canvasH = canvas.clientHeight || 210;
       canvas.width = canvasW * dpr;
       canvas.height = canvasH * dpr;
       ctx.scale(dpr, dpr);
     }
 
-    function initSpectrogramBuffer() {
-      spectrogramBuffer = [];
-      for (let c = 0; c < NUM_COLS; c++) {
-        spectrogramBuffer.push(generateSpectrogramColumn(c));
+    function initTerrain() {
+      terrainData = [];
+      for (let c = 0; c < gridCols; c++) {
+        terrainData.push(generateTerrainRow(c));
       }
     }
 
-    function generateSpectrogramColumn(timeIndex) {
-      const col = new Float32Array(NUM_BANDS);
+    function generateTerrainRow(step) {
+      const row = new Float32Array(gridRows);
       const data = PRESETS[activeKey];
       const isHealthy = data ? data.isQueenPresent : true;
 
-      for (let b = 0; b < NUM_BANDS; b++) {
-        // Base ambient hive acoustic noise
-        let val = Math.sin(b * 0.18 + timeIndex * 0.08) * 0.15 + 0.2;
-        val += (Math.random() - 0.5) * 0.12;
+      for (let r = 0; r < gridRows; r++) {
+        // Base hive background drone
+        let v = Math.sin(r * 0.25 + step * 0.08) * 0.12 + 0.15;
+        v += (Math.random() - 0.5) * 0.08;
 
-        // Colony hum fundamental (~bands 6-12)
-        if (b >= 5 && b <= 12) {
-          val += 0.35 + Math.sin(timeIndex * 0.25) * 0.1;
+        // Colony worker fundamental buzz
+        if (r >= 2 && r <= 6) {
+          v += 0.35 + Math.sin(step * 0.3) * 0.1;
         }
 
-        // Queen piping harmonics (periodic bursts ~bands 22-26 and 44-48)
+        // Queen piping harmonics (~bins 10-12 and 18-20)
         if (isHealthy) {
-          const pipingPulse = Math.sin(timeIndex * 0.18);
-          if (pipingPulse > 0.2) {
-            if (b >= 21 && b <= 26) val += 0.5 * pipingPulse;
-            if (b >= 43 && b <= 47) val += 0.32 * pipingPulse;
+          const pulse = Math.sin(step * 0.22);
+          if (pulse > 0.15) {
+            if (r >= 9 && r <= 12) v += 0.65 * pulse;
+            if (r >= 18 && r <= 20) v += 0.4 * pulse;
           }
         } else {
-          // Unhealthy agitated broadband hiss
-          if (b > 28) {
-            val += (Math.random() * 0.3);
+          // Agitated broadband distress noise
+          if (r > 12) {
+            v += Math.random() * 0.45;
           }
         }
-        col[b] = Math.max(0, Math.min(1, val));
+        row[r] = Math.max(0, Math.min(1.2, v));
       }
-      return col;
+      return row;
     }
 
-    function renderWaterfall() {
-      if (!ctx) return;
+    // 3D Perspective Projection Function
+    function projectPoint(x, y, z, cx, cy, rx, ry, scale) {
+      // Rotate around Y
+      let cosY = Math.cos(ry), sinY = Math.sin(ry);
+      let x1 = x * cosY - z * sinY;
+      let z1 = x * sinY + z * cosY;
+
+      // Rotate around X
+      let cosX = Math.cos(rx), sinX = Math.sin(rx);
+      let y1 = y * cosX - z1 * sinX;
+      let z2 = y * sinX + z1 * cosX;
+
+      const fov = 380 / (380 + z2 + 180);
+      return {
+        px: cx + x1 * fov * scale,
+        py: cy + y1 * fov * scale,
+        depth: z2
+      };
+    }
+
+    function renderLoop() {
       frameStep++;
+      ctx.clearRect(0, 0, canvasW, canvasH);
 
-      // Shift columns left and push new column on right
-      spectrogramBuffer.shift();
-      spectrogramBuffer.push(generateSpectrogramColumn(frameStep));
+      // Roll new terrain data
+      terrainData.shift();
+      terrainData.push(generateTerrainRow(frameStep));
 
-      const colW = canvasW / NUM_COLS;
-      const bandH = canvasH / NUM_BANDS;
-
-      for (let c = 0; c < NUM_COLS; c++) {
-        const col = spectrogramBuffer[c];
-        const x = c * colW;
-        for (let b = 0; b < NUM_BANDS; b++) {
-          const y = canvasH - (b + 1) * bandH;
-          const val = col[b];
-
-          // Log-Mel colormap: Dark Navy -> Cyan -> Golden Amber -> Bright Yellow
-          let r, g, bl;
-          if (val < 0.25) {
-            r = 10; g = 18; bl = 34; // Deep base
-          } else if (val < 0.5) {
-            const t = (val - 0.25) / 0.25;
-            r = Math.floor(10 + t * 4);
-            g = Math.floor(18 + t * 140);
-            bl = Math.floor(34 + t * 150); // To Cyan
-          } else if (val < 0.78) {
-            const t = (val - 0.5) / 0.28;
-            r = Math.floor(14 + t * 231);
-            g = Math.floor(158 + t * 0);
-            bl = Math.floor(184 - t * 173); // To Amber
-          } else {
-            const t = (val - 0.78) / 0.22;
-            r = Math.floor(245 + t * 10);
-            g = Math.floor(158 + t * 80);
-            bl = Math.floor(11 + t * 170); // Hot yellow
-          }
-
-          ctx.fillStyle = `rgb(${r}, ${g}, ${bl})`;
-          ctx.fillRect(x, y, colW + 0.8, bandH + 0.8);
-        }
+      if (autoRotate && !isDragging) {
+        rotY += 0.003;
       }
 
-      requestAnimationFrame(renderWaterfall);
+      if (renderMode === '3d') {
+        render3DTopography();
+      } else {
+        render2DWaterfall();
+      }
+
+      requestAnimationFrame(renderLoop);
     }
 
-    // --- Synthesizer & Audio Engine (Web Audio API) ---
+    function render3DTopography() {
+      const cx = canvasW * 0.5;
+      const cy = canvasH * 0.55;
+      const scale = 1.05;
+
+      const cellW = 10;
+      const cellD = 10;
+      const heightScale = 48;
+
+      // Render wireframe mesh strips from back to front for correct depth
+      for (let c = 0; c < gridCols - 1; c++) {
+        const z0 = (c - gridCols / 2) * cellD;
+        const z1 = (c + 1 - gridCols / 2) * cellD;
+
+        ctx.beginPath();
+        for (let r = 0; r < gridRows; r++) {
+          const x = (r - gridRows / 2) * cellW;
+          const y0 = -terrainData[c][r] * heightScale;
+          const p = projectPoint(x, y0, z0, cx, cy, rotX, rotY, scale);
+
+          if (r === 0) ctx.moveTo(p.px, p.py);
+          else ctx.lineTo(p.px, p.py);
+        }
+
+        // Color mesh by elevation and frequency
+        const energyAvg = terrainData[c][10] || 0.3;
+        if (energyAvg > 0.6) {
+          ctx.strokeStyle = `rgba(251, 191, 36, ${0.45 + (c / gridCols) * 0.4})`; // Radiant Gold
+          ctx.lineWidth = 1.6;
+        } else {
+          ctx.strokeStyle = `rgba(6, 182, 212, ${0.25 + (c / gridCols) * 0.4})`; // Bioluminescent Cyan
+          ctx.lineWidth = 1.1;
+        }
+        ctx.stroke();
+
+        // Cross connecting lines for 3D lattice
+        if (c % 2 === 0) {
+          for (let r = 0; r < gridRows; r += 2) {
+            const x = (r - gridRows / 2) * cellW;
+            const y0 = -terrainData[c][r] * heightScale;
+            const y1 = -terrainData[c + 1][r] * heightScale;
+            const p0 = projectPoint(x, y0, z0, cx, cy, rotX, rotY, scale);
+            const p1 = projectPoint(x, y1, z1, cx, cy, rotX, rotY, scale);
+
+            ctx.beginPath();
+            ctx.moveTo(p0.px, p0.py);
+            ctx.lineTo(p1.px, p1.py);
+            ctx.strokeStyle = `rgba(245, 158, 11, 0.18)`;
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function render2DWaterfall() {
+      const numCols = terrainData.length;
+      const numRows = gridRows;
+      const colW = canvasW / numCols;
+      const rowH = canvasH / numRows;
+
+      for (let c = 0; c < numCols; c++) {
+        for (let r = 0; r < numRows; r++) {
+          const val = terrainData[c][r];
+          const x = c * colW;
+          const y = canvasH - (r + 1) * rowH;
+
+          let red, green, blue;
+          if (val < 0.25) {
+            red = 12; green = 18; blue = 34;
+          } else if (val < 0.55) {
+            red = 6; green = 182; blue = 212; // Cyan
+          } else if (val < 0.85) {
+            red = 245; green = 158; blue = 11; // Amber
+          } else {
+            red = 254; green = 240; blue = 138; // Bright peak
+          }
+
+          ctx.fillStyle = `rgb(${red}, ${green}, ${blue})`;
+          ctx.fillRect(x, y, colW + 0.8, rowH + 0.8);
+        }
+      }
+    }
+
+    // --- Mouse Drag to Orbit 3D Camera ---
+    const container = document.getElementById('canvas-container');
+    container.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      autoRotate = false;
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - lastMouseX;
+      const dy = e.clientY - lastMouseY;
+      rotY += dx * 0.008;
+      rotX += dy * 0.008;
+      rotX = Math.max(0.1, Math.min(1.2, rotX)); // clamp pitch
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+    });
+
+    window.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
+    // --- 3D Parallax Tilt on Main Card on Mouse Move ---
+    const cardEl = document.getElementById('main-container');
+    window.addEventListener('mousemove', (e) => {
+      if (window.innerWidth < 768) return;
+      const rect = cardEl.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      const tiltX = (y / rect.height) * -3.5;
+      const tiltY = (x / rect.width) * 3.5;
+      cardEl.style.transform = `rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
+    });
+
+    cardEl.addEventListener('mouseleave', () => {
+      cardEl.style.transform = 'rotateX(0deg) rotateY(0deg)';
+    });
+
+    // --- Web Audio Synthesizer Engine ---
     function initWebAudio() {
       if (!audioCtx) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -796,8 +951,8 @@
       const icon = document.getElementById('play-icon');
 
       if (isPlaying) {
-        btn.classList.remove('bg-amber-500');
-        btn.classList.add('bg-emerald-500', 'glow-emerald');
+        btn.classList.remove('from-amber-400', 'to-amber-500');
+        btn.classList.add('from-emerald-400', 'to-teal-500', 'glow-emerald');
         icon.textContent = '⏸';
         startSynthesizer();
         playInterval = setInterval(() => {
@@ -806,11 +961,11 @@
           const s = String(playTimer % 60).padStart(2, '0');
           document.getElementById('audio-time').textContent = `${m}:${s} / 02:00`;
           animateVisualizerBars(true);
-        }, 120);
+        }, 110);
         addLogMessage(`▶ Acoustic monitoring active: Synthesizing ${PRESETS[activeKey].title}`);
       } else {
-        btn.classList.remove('bg-emerald-500', 'glow-emerald');
-        btn.classList.add('bg-amber-500');
+        btn.classList.remove('from-emerald-400', 'to-teal-500', 'glow-emerald');
+        btn.classList.add('from-amber-400', 'to-amber-500');
         icon.textContent = '▶';
         stopSynthesizer();
         clearInterval(playInterval);
@@ -826,7 +981,7 @@
         masterGain.gain.setValueAtTime(isMuted ? 0 : 0.08, audioCtx.currentTime);
       }
       btn.textContent = isMuted ? '🔇 Audio: MUTED' : '🔊 Audio: ON';
-      btn.className = isMuted ? 'text-rose-500 font-mono text-[10px]' : 'hover:text-amber-500 font-mono text-[10px]';
+      btn.className = isMuted ? 'text-rose-400 font-mono text-[10px] bg-slate-950 px-2 py-0.5 rounded border border-rose-500/40' : 'hover:text-amber-400 font-mono text-[10px] bg-slate-950 px-2 py-0.5 rounded border border-[var(--border)]';
     }
 
     function startSynthesizer() {
@@ -838,7 +993,7 @@
       masterGain.gain.setValueAtTime(isMuted ? 0 : 0.08, audioCtx.currentTime);
       masterGain.connect(audioCtx.destination);
 
-      // Drone Oscillator (Colony fundamental sound)
+      // Drone Oscillator
       droneOsc = audioCtx.createOscillator();
       droneOsc.type = 'sawtooth';
       droneOsc.frequency.setValueAtTime(data.droneFreq, audioCtx.currentTime);
@@ -851,7 +1006,7 @@
       droneFilter.connect(masterGain);
       droneOsc.start();
 
-      // Queen Piping Oscillator (if present)
+      // Queen Piping Oscillator
       if (data.pipeFreq > 0) {
         pipeOsc = audioCtx.createOscillator();
         pipeOsc.type = 'sine';
@@ -878,7 +1033,7 @@
       } catch (e) {}
     }
 
-    // --- Visualizer Equalizer Bars ---
+    // --- Equalizer Waveform Bars ---
     function initVisualizerBars() {
       const container = document.getElementById('visualizer-bars');
       container.innerHTML = '';
@@ -897,12 +1052,12 @@
           const isHealthy = PRESETS[activeKey].isQueenPresent;
           let h;
           if (isHealthy && idx > 12 && idx < 20) {
-            h = Math.floor(Math.random() * 18 + 8); // Queen piping resonance peak
+            h = Math.floor(Math.random() * 20 + 8);
           } else {
             h = Math.floor(Math.random() * 14 + 4);
           }
           bar.style.height = `${h}px`;
-          bar.className = isHealthy ? 'w-1 bg-emerald-400 rounded-full' : 'w-1 bg-rose-400 rounded-full';
+          bar.className = isHealthy ? 'w-1 bg-gradient-to-t from-emerald-500 to-teal-300 rounded-full' : 'w-1 bg-gradient-to-t from-rose-500 to-orange-400 rounded-full';
         } else {
           bar.style.height = '4px';
           bar.className = 'w-1 bg-amber-500/30 rounded-full';
@@ -910,17 +1065,17 @@
       });
     }
 
-    // --- Window Initialization ---
+    // --- Initializer ---
     window.addEventListener('load', () => {
-      resizeSpectrogram();
-      initSpectrogramBuffer();
+      resizeCanvas();
+      initTerrain();
       initVisualizerBars();
       selectPreset('known-present');
-      renderWaterfall();
+      renderLoop();
     });
 
     window.addEventListener('resize', () => {
-      resizeSpectrogram();
+      resizeCanvas();
     });
   </script>
 </body>
