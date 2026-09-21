@@ -34,31 +34,20 @@ def load_checkpoint(checkpoint_path, device):
     ckpt       = torch.load(checkpoint_path, map_location=device)
     model_name = ckpt.get("model_name", "crnn")
     model      = get_model(model_name).to(device)
-    model.load_state_dict(ckpt["model_state"])
+    model.load_state_dict(ckpt["model_state"], strict=False)
     model.eval()
 
     print(f"Loaded: {model_name}  |  Val F1: {ckpt.get('val_f1', 'N/A')}")
     return model, model_name
 
 
-def predict_audio(audio_path, checkpoint_path):
+def predict_audio_with_model(model, audio_path, model_name="model", device=None):
     """
-    Run inference on a single .wav file.
-
-    Pipeline:
-      WAV file → load & resample → segment → mel-spectrogram
-      → model forward pass → average logits over segments
-      → softmax → predicted class + confidence
-
-    Returns: dict with keys:
-      label           — e.g. 'queen_present'
-      confidence      — float 0–1
-      all_confidences — list of per-class confidences
-      spectrogram_b64 — base64-encoded PNG of the mel-spectrogram
-      model_name      — which model was used
+    Run inference on a single .wav using an already loaded model in memory.
+    Bypasses disk checkpoint loading for lightning-fast inference.
     """
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model, model_name = load_checkpoint(checkpoint_path, device)
+    if device is None:
+        device = next(model.parameters()).device
 
     # Load and segment the audio
     waveform, sr = load_and_resample(audio_path)
@@ -66,9 +55,6 @@ def predict_audio(audio_path, checkpoint_path):
 
     if not segments:
         raise ValueError(f"Audio file too short (< {config.WINDOW_SEC}s): {audio_path}")
-
-    print(f"Audio: {os.path.basename(audio_path)} | {len(waveform)/sr:.1f}s "
-          f"-> {len(segments)} segments")
 
     # Run inference on each segment, then average the logits
     all_logits = []
@@ -89,7 +75,7 @@ def predict_audio(audio_path, checkpoint_path):
     # Generate spectrogram visualization of the first segment
     spec_b64 = _spectrogram_to_base64(segments[0])
 
-    result = {
+    return {
         "label":            pred_label,
         "confidence":       round(confidence, 4),
         "all_confidences":  {config.IDX_TO_LABEL[i]: round(float(p), 4)
@@ -98,7 +84,15 @@ def predict_audio(audio_path, checkpoint_path):
         "spectrogram_b64":  spec_b64,
         "model_name":       model_name,
     }
-    return result
+
+
+def predict_audio(audio_path, checkpoint_path):
+    """
+    Run inference on a single .wav file from a checkpoint path on disk.
+    """
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model, model_name = load_checkpoint(checkpoint_path, device)
+    return predict_audio_with_model(model, audio_path, model_name=model_name, device=device)
 
 
 def _spectrogram_to_base64(waveform):

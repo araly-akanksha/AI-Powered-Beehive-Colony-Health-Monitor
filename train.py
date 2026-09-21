@@ -148,28 +148,32 @@ def evaluate(model, loader, device, split_name="val"):
     all_labels = []
 
     with torch.no_grad():
-        for specs, labels in loader:
-            specs  = specs.to(device)
+        for batch in loader:
+            specs  = batch[0].to(device)
+            labels = batch[1]
             logits = model(specs)
             preds  = logits.argmax(dim=1).cpu().numpy()
             all_preds .extend(preds)
             all_labels.extend(labels.numpy())
 
-    acc   = accuracy_score(all_labels, all_preds)
-    prec  = precision_score(all_labels, all_preds, average="weighted", zero_division=0)
-    rec   = recall_score(all_labels, all_preds, average="weighted", zero_division=0)
-    f1    = f1_score(all_labels, all_preds, average="weighted", zero_division=0)
-    cm    = confusion_matrix(all_labels, all_preds)
+    acc         = accuracy_score(all_labels, all_preds)
+    prec        = precision_score(all_labels, all_preds, average="weighted", zero_division=0)
+    rec         = recall_score(all_labels, all_preds, average="weighted", zero_division=0)
+    f1_macro    = f1_score(all_labels, all_preds, average="macro", zero_division=0)
+    f1_weighted = f1_score(all_labels, all_preds, average="weighted", zero_division=0)
+    cm          = confusion_matrix(all_labels, all_preds)
 
-    print(f"\n[{split_name.upper()}] Accuracy: {acc:.4f} | Precision: {prec:.4f} | "
-          f"Recall: {rec:.4f} | F1: {f1:.4f}")
+    print(f"\n[{split_name.upper()}] Accuracy: {acc:.4f} | F1 (Macro): {f1_macro:.4f} | "
+          f"F1 (Weighted): {f1_weighted:.4f} | Precision: {prec:.4f} | Recall: {rec:.4f}")
     print(f"Confusion matrix:\n{cm}")
 
     return {
         "accuracy":         acc,
         "precision":        prec,
         "recall":           rec,
-        "f1":               f1,
+        "f1":               f1_macro,
+        "f1_macro":         f1_macro,
+        "f1_weighted":      f1_weighted,
         "confusion_matrix": cm.tolist(),
         "all_preds":        all_preds,
         "all_labels":       all_labels,

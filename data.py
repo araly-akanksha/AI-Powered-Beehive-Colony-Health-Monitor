@@ -145,6 +145,12 @@ def augment(waveform, sr):
         steps    = random.choice(config.PITCH_SHIFT_STEPS)
         waveform = librosa.effects.pitch_shift(waveform, sr=sr, n_steps=steps)
 
+    # Guarantee exact WINDOW_SAMPLES length after all augmentations
+    if len(waveform) > config.WINDOW_SAMPLES:
+        waveform = waveform[:config.WINDOW_SAMPLES]
+    elif len(waveform) < config.WINDOW_SAMPLES:
+        waveform = np.pad(waveform, (0, config.WINDOW_SAMPLES - len(waveform)))
+
     return waveform.astype(np.float32)
 
 
@@ -182,11 +188,11 @@ class BeeDataset(Dataset):
             self.df = self.df.sample(n=debug_limit, random_state=42)
             print(f"  [DEBUG_LIMIT ON] Restricted to {debug_limit} files.", flush=True)
 
-        for _, row in self.df.iterrows():
-            filepath   = row["filepath"]
-            label_idx  = config.LABEL_MAP.get(row["label"], -1)
-            duration   = row["duration_sec"]
-            hive_id    = str(row.get("hive_id", ""))
+        for row in self.df.itertuples(index=False):
+            filepath   = getattr(row, "filepath", "")
+            label_idx  = config.LABEL_MAP.get(getattr(row, "label", ""), -1)
+            duration   = getattr(row, "duration_sec", 0)
+            hive_id    = str(getattr(row, "hive_id", ""))
             domain_idx = self.hive_to_domain.get(hive_id, 0)
             if label_idx == -1 or duration < config.WINDOW_SEC:
                 continue

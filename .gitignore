@@ -32,8 +32,10 @@ data/processed/*.csv
 *.mp3
 *.flac
 *.ogg
-backend/samples/*.wav
-frontend/public/samples/*.wav
+
+# Whitelist lightweight curated demo clips (~187 KB each) for Vercel deployment
+!backend/samples/*.wav
+!frontend/public/samples/*.wav
 
 # Scratch & temporary backups
 frontend/src_v1_backup/

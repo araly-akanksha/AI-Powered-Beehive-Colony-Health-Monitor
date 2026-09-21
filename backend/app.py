@@ -25,8 +25,9 @@ import numpy as np
 
 # Allow importing predict.py and config.py from the parent directory
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import torch
 import config
-from predict import predict_audio
+from predict import predict_audio, predict_audio_with_model, load_checkpoint
 
 # -------------------------------------------------------
 # App setup
@@ -66,6 +67,33 @@ MODEL_CHECKPOINTS = [
         "path": os.path.join(config.CHECKPOINT_DIR, "exp_03_dann_best.pt"),
     },
 ]
+
+# In-memory model cache to avoid repeated disk reads per request
+MODEL_CACHE = {}
+
+def get_loaded_model(key):
+    """Retrieve pre-loaded model from memory, or load on-demand."""
+    if key in MODEL_CACHE:
+        return MODEL_CACHE[key]
+    for m in MODEL_CHECKPOINTS:
+        if m["key"] == key and os.path.exists(m["path"]):
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            try:
+                model, _ = load_checkpoint(m["path"], device)
+                MODEL_CACHE[key] = (model, m["name"])
+                return MODEL_CACHE[key]
+            except Exception as e:
+                print(f"Warning: Failed to load checkpoint {m['path']}: {e}")
+                return None, None
+    return None, None
+
+@app.on_event("startup")
+def preload_models():
+    """Pre-load all model weights into memory at startup for fast inference."""
+    print("Pre-loading models into memory cache...")
+    for m in MODEL_CHECKPOINTS:
+        get_loaded_model(m["key"])
+    print(f"Models cached: {list(MODEL_CACHE.keys())}")
 
 # Path to the default single-model checkpoint (DANN > CRNN > CNN)
 def _find_best_checkpoint():
@@ -194,10 +222,11 @@ def predict_sample(clip_name: str):
     Example:
       POST /predict-sample/known_hive_queen.wav
     """
-    clip_path = os.path.join(SAMPLES_DIR, clip_name)
+    safe_name = os.path.basename(clip_name)
+    clip_path = os.path.join(SAMPLES_DIR, safe_name)
 
     if not os.path.exists(clip_path):
-        raise HTTPException(status_code=404, detail=f"Sample '{clip_name}' not found. "
+        raise HTTPException(status_code=404, detail=f"Sample '{safe_name}' not found. "
                             f"Add .wav files to backend/samples/")
 
     checkpoint = _get_checkpoint()
@@ -310,10 +339,10 @@ async def api_analyze(audio: UploadFile = File(...)):
         for m_info in MODEL_CHECKPOINTS:
             m_key = m_info["key"]
             m_name = m_info["name"]
-            ckpt_path = m_info["path"]
+            model, _ = get_loaded_model(m_key)
 
-            if os.path.exists(ckpt_path):
-                pred = predict_audio(tmp_path, ckpt_path)
+            if model is not None:
+                pred = predict_audio_with_model(model, tmp_path, model_name=m_name)
                 raw_label = pred["label"]
                 conf = round(float(pred["confidence"]), 2)
                 disp_label = "Queen Present" if raw_label == "queen_present" else "Queen Absent"
@@ -404,8 +433,9 @@ def api_get_samples():
 @app.get("/api/samples/audio/{filename}")
 def stream_sample_audio(filename: str):
     """Serve demo WAV clips directly to browser audio player."""
-    fpath = os.path.join(SAMPLES_DIR, filename)
+    safe_name = os.path.basename(filename)
+    fpath = os.path.join(SAMPLES_DIR, safe_name)
     if not os.path.exists(fpath):
-        raise HTTPException(status_code=404, detail=f"Audio clip '{filename}' not found.")
+        raise HTTPException(status_code=404, detail=f"Audio clip '{safe_name}' not found.")
     return FileResponse(fpath, media_type="audio/wav")
 

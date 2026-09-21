@@ -295,7 +295,7 @@ class DANN(nn.Module):
         # 3. Domain Classification Head (Adversarial Hive ID predictor)
         self.domain_classifier = nn.Sequential(
             nn.Linear(gru_out_size, 128),
-            nn.BatchNorm1d(128),
+            nn.LayerNorm(128),
             nn.ReLU(inplace=True),
             nn.Dropout(config.DROPOUT),
             nn.Linear(128, num_domains),
