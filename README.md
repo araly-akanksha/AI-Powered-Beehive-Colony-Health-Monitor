@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Vercel-black?style=for-the-badge&logo=vercel)](YOUR_VERCEL_URL)
+[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Vercel-black?style=for-the-badge&logo=vercel)](https://bee-hive-deep-learning-project.vercel.app/)
 [![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github)](https://github.com/araly-akanksha/Bee-Hive---Deep-Learning-Project)
 [![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org)
@@ -20,7 +20,7 @@
 
 > **Try it now — no installation required!**
 
-**👉 [Open the 3D Acoustic Hive Sentinel UI](YOUR_VERCEL_URL)**
+**👉 [Open the 3D Acoustic Hive Sentinel UI](https://bee-hive-deep-learning-project.vercel.app/)**
 
 The live web dashboard features:
 - 🐝 **Interactive 3D Beehive Wireframe** — animates in response to classification confidence
@@ -182,7 +182,7 @@ cd frontend
 npm install
 npm run dev
 ```
-Open `http://localhost:5173` — or just use the **[Live Vercel Demo](YOUR_VERCEL_URL)** instead!
+Open `http://localhost:5173` — or just use the **[Live Vercel Demo](https://bee-hive-deep-learning-project.vercel.app/)** instead!
 
 ---
 
@@ -262,6 +262,6 @@ Please cite this repository if you use this work in your own research.
 Made with 🐝 by **Araly Akanksha** | MSc Big Data Analytics  
 ⭐ Star this repo if you found it helpful!
 
-**[🚀 Try the Live Demo](YOUR_VERCEL_URL)** · **[📂 Browse Code](https://github.com/araly-akanksha/Bee-Hive---Deep-Learning-Project)**
+**[🚀 Try the Live Demo](https://bee-hive-deep-learning-project.vercel.app/)** · **[📂 Browse Code](https://github.com/araly-akanksha/Bee-Hive---Deep-Learning-Project)**
 
 </div>
